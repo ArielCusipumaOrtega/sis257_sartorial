@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./backend_sartorial
+      dockerfile: Dockerfile
+    image: backend-sartorial
+    container_name: backend_sartorial
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: host.docker.internal
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: su_password
+      DB_NAME: sis257_sartorial
+      JWT_SECRET: sartorial_prestige_secret_key_sis257_2024
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend_sartorial
+      dockerfile: Dockerfile
+    image: frontend-sartorial
+    container_name: frontend_sartorial
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_BASE_URL_ENDPOINT: http://localhost:3000/api/v1/
+    depends_on:
+      - backend
+    restart: unless-stopped
