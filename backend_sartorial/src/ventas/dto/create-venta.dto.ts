@@ -66,6 +66,11 @@ export class CreateVentaDto {
   @IsOptional()
   clienteId?: number;
 
+  @ApiProperty({ example: 'ONLINE_WEB', required: false })
+  @IsString()
+  @IsOptional()
+  canal?: string;
+
   @ApiProperty({ enum: ['Confirmada', 'Cancelada', 'Pendiente'], required: false })
   @IsEnum(['Confirmada', 'Cancelada', 'Pendiente'])
   @IsOptional()

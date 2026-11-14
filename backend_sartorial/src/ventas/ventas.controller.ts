@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { VentasService } from './ventas.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 
@@ -12,9 +13,10 @@ export class VentasController {
   constructor(private readonly ventasService: VentasService) {}
 
   @Post()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Registrar nueva venta (POS o E-commerce)' })
   create(@Body() createVentaDto: CreateVentaDto, @CurrentUser() usuario?: Usuario) {
-    return this.ventasService.create(createVentaDto, usuario);
+    return this.ventasService.create(createVentaDto, usuario || null);
   }
 
   @ApiBearerAuth()

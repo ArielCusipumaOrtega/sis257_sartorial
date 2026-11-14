@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Venta, EstadoVenta } from './entities/venta.entity';
@@ -49,6 +49,14 @@ export class VentasService {
   }
 
   async create(createVentaDto: CreateVentaDto, usuarioAutenticado: Usuario | null = null): Promise<Venta> {
+    if (!createVentaDto.detalles || createVentaDto.detalles.length === 0) {
+      throw new BadRequestException('El pedido debe contener al menos una prenda o producto');
+    }
+
+    if (createVentaDto.canal === 'ONLINE_WEB' && !usuarioAutenticado) {
+      throw new UnauthorizedException('Debe iniciar sesión para realizar compras en la boutique virtual');
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
