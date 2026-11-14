@@ -19,9 +19,11 @@ export const useAuthStore = defineStore('auth', {
   },
   getters: {
     isLoggedIn: (state) => !!state.token,
+    isAuthenticated: (state) => !!state.token,
     isAdmin: (state) => state.user?.rol?.nombre === 'ADMIN',
     isVendedor: (state) => state.user?.rol?.nombre === 'VENDEDOR',
     isCliente: (state) => state.user?.rol?.nombre === 'CLIENTE',
+    rolName: (state) => state.user?.rol?.nombre || 'INVITADO',
     fullName: (state) => state.user ? `${state.user.nombre} ${state.user.apellido}` : '',
   },
   actions: {
@@ -37,6 +39,8 @@ export const useAuthStore = defineStore('auth', {
         correo: data.correo,
         usuario: data.usuario,
         rol: data.rol,
+        clienteId: data.clienteId || data.cliente?.id,
+        cliente: data.cliente,
       }
 
       localStorage.setItem('token', this.token || '')
@@ -46,10 +50,13 @@ export const useAuthStore = defineStore('auth', {
       if (this.user?.rol?.nombre === 'ADMIN') targetPath = '/admin/dashboard'
       else if (this.user?.rol?.nombre === 'VENDEDOR') targetPath = '/vendedor/dashboard'
 
-      router.push(this.returnUrl || targetPath)
+      const destination = this.returnUrl || targetPath
+      this.returnUrl = ''
+      router.push(destination)
     },
     logout() {
-      localStorage.clear()
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
       this.$reset()
       this.token = null
       this.user = null

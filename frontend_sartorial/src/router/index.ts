@@ -94,11 +94,8 @@ router.beforeEach(async (to) => {
     return '/admin/dashboard'
   }
 
-  if (to.path === '/login' && token) {
-    if (authStore.user?.rol?.nombre === 'CLIENTE') return '/'
-    if (authStore.user?.rol?.nombre === 'ADMIN') return '/admin/dashboard'
-    if (authStore.user?.rol?.nombre === 'VENDEDOR') return '/vendedor/dashboard'
-  }
+  // Permitir acceder a /login incluso teniendo sesión activa
+  // para poder visualizar su cuenta, cambiar de usuario o cerrar sesión.
 })
 
 export default router
