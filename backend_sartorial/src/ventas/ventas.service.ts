@@ -81,6 +81,16 @@ export class VentasService {
       let resolvedClienteId: number;
       if (clienteId && clienteId > 0) {
         resolvedClienteId = clienteId;
+      } else if (usuarioAutenticado) {
+        const clienteVinculado = await queryRunner.manager.findOne(Cliente, {
+          where: [{ usuarioId: usuarioAutenticado.id }, { correo: usuarioAutenticado.correo }],
+        });
+        if (clienteVinculado) {
+          resolvedClienteId = clienteVinculado.id;
+        } else {
+          const consumidor = await this.getConsumidorFinal(queryRunner.manager);
+          resolvedClienteId = consumidor.id;
+        }
       } else {
         const consumidor = await this.getConsumidorFinal(queryRunner.manager);
         resolvedClienteId = consumidor.id;
@@ -275,7 +285,17 @@ export class VentasService {
     }
   }
 
-  async findAll(query?: { clienteId?: number; estado?: string; usuarioId?: number; limit?: number }) {
+  async findAll(query?: {
+    clienteId?: number;
+    estado?: string;
+    usuarioId?: number;
+    limit?: number;
+    page?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
+    all?: boolean;
+  }) {
     const qb = this.ventaRepository.createQueryBuilder('v')
       .leftJoinAndSelect('v.cliente', 'c')
       .leftJoinAndSelect('v.usuario', 'u')
@@ -283,8 +303,11 @@ export class VentasService {
       .leftJoinAndSelect('d.producto', 'p')
       .leftJoinAndSelect('v.pagos', 'pg')
       .leftJoinAndSelect('pg.metodoPago', 'mp')
-      .leftJoinAndSelect('v.delivery', 'del')
-      .orderBy('v.fecha', 'DESC');
+      .leftJoinAndSelect('v.delivery', 'del');
+
+    const sortField = query?.sortBy ? (query.sortBy.includes('.') ? query.sortBy : `v.${query.sortBy}`) : 'v.fecha';
+    const sortDir = query?.sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    qb.orderBy(sortField, sortDir);
 
     if (query?.clienteId) {
       qb.andWhere('v.clienteId = :clienteId', { clienteId: query.clienteId });
@@ -295,7 +318,33 @@ export class VentasService {
     if (query?.usuarioId) {
       qb.andWhere('v.usuarioId = :usuarioId', { usuarioId: query.usuarioId });
     }
-    if (query?.limit) {
+    if (query?.search) {
+      qb.andWhere(
+        '(v.codigoComprobante ILIKE :s OR c.nombre ILIKE :s OR c.apellido ILIKE :s OR c.ciNit ILIKE :s)',
+        { s: `%${query.search}%` },
+      );
+    }
+
+    const page = query?.page ? Math.max(1, Number(query.page)) : null;
+    const limit = query?.limit ? Math.max(1, Math.min(100, Number(query.limit))) : null;
+    const isPaginated = page !== null && limit !== null && !query?.all;
+
+    if (isPaginated) {
+      qb.skip((page - 1) * limit).take(limit);
+      const [data, total] = await qb.getManyAndCount();
+      const totalPages = Math.ceil(total / limit) || 1;
+      return {
+        data,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      };
+    }
+
+    if (query?.limit && !isPaginated) {
       qb.take(query.limit);
     }
 
@@ -418,6 +467,41 @@ export class VentasService {
       totalTransacciones,
       alertasStockBajo: stockBajo.length,
       itemsStockBajo: stockBajo,
+    };
+  }
+
+  async getEstadisticasMensuales(year: number = new Date().getFullYear()) {
+    const rawData = await this.ventaRepository
+      .createQueryBuilder('v')
+      .select("DATE_TRUNC('month', v.fecha)", 'mes_fecha')
+      .addSelect('EXTRACT(MONTH FROM v.fecha)', 'mes')
+      .addSelect('SUM(v.total)', 'total')
+      .addSelect('COUNT(v.id)', 'cantidad')
+      .where('EXTRACT(YEAR FROM v.fecha) = :year', { year })
+      .andWhere("v.estado != 'Cancelada'")
+      .groupBy("DATE_TRUNC('month', v.fecha)")
+      .addGroupBy('EXTRACT(MONTH FROM v.fecha)')
+      .orderBy('mes', 'ASC')
+      .getRawMany();
+
+    const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const resultado = mesesNombres.map((nombre, idx) => {
+      const mesNum = idx + 1;
+      const found = rawData.find((r) => parseInt(r.mes, 10) === mesNum);
+      return {
+        mes: mesNum,
+        nombre,
+        total: found ? parseFloat(found.total) : 0,
+        cantidad: found ? parseInt(found.cantidad, 10) : 0,
+      };
+    });
+
+    return {
+      year,
+      labels: mesesNombres,
+      totales: resultado.map((r) => r.total),
+      cantidades: resultado.map((r) => r.cantidad),
+      resumen: resultado,
     };
   }
 

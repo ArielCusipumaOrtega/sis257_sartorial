@@ -27,19 +27,35 @@ export class VentasController {
     return this.ventasService.getEstadisticas();
   }
 
+  @Get('estadisticas/mensuales')
+  @ApiOperation({ summary: 'Obtener ventas agrupadas por mes mediante DATE_TRUNC y SQL' })
+  getEstadisticasMensuales(@Query('year') year?: string) {
+    return this.ventasService.getEstadisticasMensuales(year ? +year : undefined);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Listar ventas realizadas con filtros' })
+  @ApiOperation({ summary: 'Listar ventas realizadas con filtros y paginación' })
   findAll(
     @Query('clienteId') clienteId?: string,
     @Query('estado') estado?: string,
     @Query('usuarioId') usuarioId?: string,
     @Query('limit') limit?: string,
+    @Query('page') page?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc',
+    @Query('all') all?: string,
   ) {
     return this.ventasService.findAll({
       clienteId: clienteId ? +clienteId : undefined,
       estado,
       usuarioId: usuarioId ? +usuarioId : undefined,
       limit: limit ? +limit : undefined,
+      page: page ? +page : undefined,
+      search,
+      sortBy,
+      sortOrder,
+      all: all === 'true',
     });
   }
 

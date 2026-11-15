@@ -3,32 +3,50 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
       <div>
         <h2 class="font-serif fw-bold text-white mb-1">Historial de Ventas & Facturación</h2>
-        <p class="text-secondary small mb-0 font-display">Registro integral de operaciones en mostrador y pedidos online</p>
+        <p class="text-secondary small mb-0 font-display">Registro integral de operaciones en mostrador y pedidos online con emisión de PDF</p>
       </div>
-      <router-link to="/admin/ventas/nueva" class="btn btn-gold d-flex align-items-center gap-2">
-        <i class="bi bi-cart-plus-fill"></i> Nueva Venta en Caja
-      </router-link>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-success d-flex align-items-center gap-2" @click="exportarExcel" title="Descargar histórico en formato Excel">
+          <i class="bi bi-file-earmark-excel-fill"></i> Exportar a Excel
+        </button>
+        <router-link to="/admin/ventas/nueva" class="btn btn-gold d-flex align-items-center gap-2">
+          <i class="bi bi-cart-plus-fill"></i> Nueva Venta en Caja
+        </router-link>
+      </div>
     </div>
 
     <!-- Filtros de Ventas -->
     <div class="card-sartorial p-3 mb-4">
       <div class="row g-3 align-items-center">
-        <div class="col-md-6">
+        <div class="col-md-5">
           <div class="input-group">
             <span class="input-group-text bg-transparent text-gold border-secondary"><i class="bi bi-search"></i></span>
-            <input v-model="filtroBusqueda" type="text" class="form-control" placeholder="Buscar por código de ticket o cliente..." />
+            <input
+              v-model="filtroBusqueda"
+              type="text"
+              class="form-control"
+              placeholder="Buscar por código de ticket o cliente..."
+              @input="onSearchInput"
+            />
           </div>
         </div>
         <div class="col-md-3">
-          <select v-model="filtroEstado" class="form-select">
+          <select v-model="filtroEstado" class="form-select" @change="cargarVentas(1)">
             <option value="">Todos los Estados</option>
             <option value="Confirmada">Confirmadas</option>
             <option value="Cancelada">Canceladas</option>
           </select>
         </div>
-        <div class="col-md-3 text-end">
-          <button class="btn btn-outline-secondary w-100 text-white" @click="cargarVentas">
-            <i class="bi bi-arrow-clockwise me-1"></i> Actualizar Lista
+        <div class="col-md-2">
+          <select v-model="limit" class="form-select" @change="cargarVentas(1)">
+            <option :value="10">10 por pág</option>
+            <option :value="20">20 por pág</option>
+            <option :value="50">50 por pág</option>
+          </select>
+        </div>
+        <div class="col-md-2 text-end">
+          <button class="btn btn-outline-secondary w-100 text-white" @click="cargarVentas(page)">
+            <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
           </button>
         </div>
       </div>
@@ -48,33 +66,48 @@
                 <th class="text-nowrap-cell">Canal / Entrega</th>
                 <th>Atendido Por</th>
                 <th class="text-nowrap-cell">Estado</th>
-                <th class="cell-actions text-end">Acciones</th>
+                <th class="cell-actions text-end">Acciones & Documentos</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="v in ventasFiltradas" :key="v.id">
+              <tr v-if="cargando">
+                <td colspan="8" class="text-center py-4 text-secondary">
+                  <div class="spinner-border text-gold spinner-border-sm me-2" role="status"></div>
+                  Cargando operaciones comerciales...
+                </td>
+              </tr>
+              <tr v-else-if="ventas.length === 0">
+                <td colspan="8" class="text-center text-secondary py-5">
+                  <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                  No se encontraron ventas registradas
+                </td>
+              </tr>
+              <tr v-for="v in ventas" :key="v.id">
                 <td class="fw-bold text-gold text-nowrap-cell">{{ v.codigoComprobante || 'TKT-' + v.id }}</td>
                 <td>
                   <div class="fw-bold text-white">{{ v.cliente ? `${v.cliente.nombre} ${v.cliente.apellido}` : 'Consumidor Final' }}</div>
                   <small class="text-secondary">CI: {{ v.cliente?.ciNit || '0' }}</small>
                 </td>
                 <td class="text-secondary small">{{ formatDate(v.fecha) }}</td>
-                <td class="fw-bold text-white fs-6 text-nowrap-cell cell-price">{{ formatPrice(v.total) }}</td>
+                <td class="fw-bold text-nowrap-cell cell-price">
+                  <PriceTag :amount="v.total" color="white" />
+                </td>
                 <td class="text-nowrap-cell cell-badge">
-                  <span class="badge" :class="v.tipoEntrega === 'Delivery' ? 'bg-info text-dark' : 'bg-dark border border-secondary text-secondary'">
-                    <i :class="v.tipoEntrega === 'Delivery' ? 'bi bi-truck' : 'bi bi-shop'" class="me-1"></i>
-                    {{ v.tipoEntrega }}
-                  </span>
+                  <StatusBadge :status="v.tipoEntrega" type="delivery" />
                 </td>
                 <td class="small text-secondary">{{ v.usuario ? `${v.usuario.nombre} ${v.usuario.apellido}` : 'Tienda Online' }}</td>
                 <td class="text-nowrap-cell cell-badge">
-                  <span class="badge" :class="v.estado === 'Confirmada' ? 'bg-success' : 'bg-danger'">
-                    {{ v.estado }}
-                  </span>
+                  <StatusBadge :status="v.estado" type="venta" />
                 </td>
                 <td class="cell-actions text-end">
                   <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-gold" @click="verDetalle(v)" title="Ver Detalle">
+                    <button class="btn btn-sm btn-outline-light" @click="descargarTicketPdf(v)" title="Imprimir Ticket Térmico 80mm en PDF con QR">
+                      <i class="bi bi-receipt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" @click="descargarFacturaPdf(v)" title="Descargar Factura A4 Formal en PDF">
+                      <i class="bi bi-file-earmark-pdf"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-gold" @click="verDetalle(v)" title="Ver Detalle de Venta">
                       <i class="bi bi-eye"></i>
                     </button>
                     <button
@@ -88,14 +121,41 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="ventasFiltradas.length === 0">
-                <td colspan="8" class="text-center text-secondary py-5">
-                  <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                  No se encontraron ventas registradas
-                </td>
-              </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Paginación Server-Side -->
+      <div class="card-footer bg-transparent border-secondary p-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <small class="text-secondary font-display">
+          Página <span class="text-gold fw-bold">{{ page }}</span> de <span class="text-white">{{ totalPages }}</span>
+          (Total: <span class="text-gold fw-bold">{{ totalVentas }}</span> transacciones)
+        </small>
+        <div class="btn-group">
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            :disabled="page <= 1 || cargando"
+            @click="cargarVentas(page - 1)"
+          >
+            <i class="bi bi-chevron-left me-1"></i> Anterior
+          </button>
+          <button
+            v-for="p in totalPages"
+            :key="p"
+            class="btn btn-sm"
+            :class="p === page ? 'btn-gold' : 'btn-outline-secondary'"
+            @click="cargarVentas(p)"
+          >
+            {{ p }}
+          </button>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            :disabled="page >= totalPages || cargando"
+            @click="cargarVentas(page + 1)"
+          >
+            Siguiente <i class="bi bi-chevron-right ms-1"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -106,35 +166,39 @@
         <div class="modal-content">
           <div class="modal-header border-secondary">
             <div>
-              <h5 class="modal-title font-display text-gold mb-0">Comprobante {{ ventaSeleccionada.codigoComprobante }}</h5>
-              <small class="text-secondary">Emitido el {{ formatDate(ventaSeleccionada.fecha) }}</small>
+              <h5 class="modal-title font-display text-gold mb-0">Comprobante de Venta: {{ ventaSeleccionada.codigoComprobante }}</h5>
+              <small class="text-secondary">{{ formatDate(ventaSeleccionada.fecha) }} &bull; Atendido por: {{ ventaSeleccionada.usuario ? `${ventaSeleccionada.usuario.nombre} ${ventaSeleccionada.usuario.apellido}` : 'Tienda Online' }}</small>
             </div>
             <button type="button" class="btn-close btn-close-white" @click="ventaSeleccionada = null"></button>
           </div>
           <div class="modal-body p-4">
-            <div class="row g-3 mb-4 p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+            <div class="row mb-3 g-2">
               <div class="col-md-6">
-                <span class="text-secondary small d-block">Cliente Receptor:</span>
-                <strong class="text-white">{{ ventaSeleccionada.cliente ? `${ventaSeleccionada.cliente.nombre} ${ventaSeleccionada.cliente.apellido}` : 'Consumidor Final' }}</strong>
-                <div class="small text-secondary">CI/NIT: {{ ventaSeleccionada.cliente?.ciNit || '0' }} &bull; Tel: {{ ventaSeleccionada.cliente?.telefono || 'N/A' }}</div>
+                <span class="text-secondary small font-display">CLIENTE:</span>
+                <div class="fw-bold text-white fs-6">{{ ventaSeleccionada.cliente ? `${ventaSeleccionada.cliente.nombre} ${ventaSeleccionada.cliente.apellido}` : 'Consumidor Final' }}</div>
+                <div class="small text-secondary">CI / NIT: {{ ventaSeleccionada.cliente?.ciNit || '0' }}</div>
               </div>
               <div class="col-md-6 text-md-end">
-                <span class="text-secondary small d-block">Modalidad de Venta:</span>
-                <strong class="text-gold">{{ ventaSeleccionada.tipoEntrega }}</strong>
-                <div v-if="ventaSeleccionada.direccionEntrega" class="small text-secondary">{{ ventaSeleccionada.direccionEntrega }}</div>
+                <span class="text-secondary small font-display">MODALIDAD DE ENTREGA:</span>
+                <div>
+                  <span class="badge" :class="ventaSeleccionada.tipoEntrega === 'Delivery' ? 'bg-info text-dark' : 'bg-dark border border-secondary text-secondary'">
+                    <i :class="ventaSeleccionada.tipoEntrega === 'Delivery' ? 'bi bi-truck' : 'bi bi-shop'" class="me-1"></i>
+                    {{ ventaSeleccionada.tipoEntrega === 'Delivery' ? 'Envío a Domicilio con Planchado al Vapor' : 'Retiro en Boutique' }}
+                  </span>
+                </div>
+                <small v-if="ventaSeleccionada.direccionEntrega" class="text-secondary d-block mt-1">Dirección: {{ ventaSeleccionada.direccionEntrega }}</small>
               </div>
             </div>
 
-            <h6 class="font-display text-gold mb-2"><i class="bi bi-bag-check me-2"></i> Prendas y Artículos Incluidos</h6>
-            <div class="table-responsive mb-4">
-              <table class="table-sartorial">
+            <!-- Tabla de Prendas -->
+            <div class="table-responsive mb-3">
+              <table class="table-sartorial table-sm mb-0">
                 <thead>
                   <tr>
-                    <th>Prenda</th>
+                    <th>Prenda / Modelo</th>
                     <th>Talla</th>
-                    <th>Color</th>
                     <th class="text-center">Cant</th>
-                    <th class="text-end">Precio</th>
+                    <th class="text-end">Precio Unit.</th>
                     <th class="text-end">Subtotal</th>
                   </tr>
                 </thead>
@@ -142,13 +206,12 @@
                   <tr v-for="d in ventaSeleccionada.detalles" :key="d.id">
                     <td>
                       <div class="fw-bold text-white">{{ d.producto?.nombre }}</div>
-                      <small class="text-secondary">{{ d.producto?.codigo }}</small>
+                      <small class="text-secondary">{{ d.producto?.categoria?.nombre }} &bull; {{ d.producto?.marca?.nombre }}</small>
                     </td>
                     <td><span class="badge-talla">{{ d.talla || d.producto?.talla }}</span></td>
-                    <td class="small">{{ d.color || d.producto?.color }}</td>
                     <td class="text-center">{{ d.cantidad }}</td>
-                    <td class="text-end">{{ formatPrice(d.precio) }}</td>
-                    <td class="text-end fw-bold text-gold">{{ formatPrice(d.subtotal) }}</td>
+                    <td class="text-end"><PriceTag :amount="d.precio" size="sm" color="muted" /></td>
+                    <td class="text-end fw-bold"><PriceTag :amount="d.subtotal" size="sm" color="gold" /></td>
                   </tr>
                 </tbody>
               </table>
@@ -163,15 +226,20 @@
               </div>
               <div class="col-md-6 text-end">
                 <span class="text-secondary small">Total Transacción:</span>
-                <div class="display-6 fw-bold text-gold">{{ formatPrice(ventaSeleccionada.total) }}</div>
+                <div class="mt-1"><PriceTag :amount="ventaSeleccionada.total" size="xl" color="gold" /></div>
               </div>
             </div>
           </div>
-          <div class="modal-footer border-secondary">
+          <div class="modal-footer border-secondary d-flex flex-wrap justify-content-between gap-2">
             <button type="button" class="btn btn-outline-secondary" @click="ventaSeleccionada = null">Cerrar</button>
-            <button type="button" class="btn btn-gold" @click="imprimirModal">
-              <i class="bi bi-printer me-1"></i> Imprimir Comprobante
-            </button>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-dark" @click="descargarTicketPdf(ventaSeleccionada)">
+                <i class="bi bi-receipt me-1"></i> Ticket 80mm PDF
+              </button>
+              <button type="button" class="btn btn-gold text-dark" @click="descargarFacturaPdf(ventaSeleccionada)">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Factura A4 PDF
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -180,51 +248,84 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import http from '@/plugins/axios'
 import { formatPrice, formatDate } from '@/helpers'
 import { useAuthStore } from '@/stores/auth'
+import StatusBadge from '@/components/common/StatusBadge.vue'
+import PriceTag from '@/components/common/PriceTag.vue'
 import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
 const ventas = ref<any[]>([])
+const cargando = ref(false)
+
 const filtroBusqueda = ref('')
 const filtroEstado = ref('')
 const ventaSeleccionada = ref<any | null>(null)
 
-const cargarVentas = async () => {
+// Paginación
+const page = ref(1)
+const limit = ref(10)
+const totalPages = ref(1)
+const totalVentas = ref(0)
+
+const cargarVentas = async (nuevaPagina = 1) => {
+  cargando.value = true
+  page.value = nuevaPagina
   try {
-    const res = await http.get('ventas')
-    ventas.value = res.data
+    const res = await http.get('ventas', {
+      params: {
+        page: page.value,
+        limit: limit.value,
+        search: filtroBusqueda.value || undefined,
+        estado: filtroEstado.value || undefined,
+      },
+    })
+    if (res.data && res.data.data) {
+      ventas.value = res.data.data
+      totalVentas.value = res.data.total
+      totalPages.value = res.data.totalPages || 1
+    } else {
+      ventas.value = Array.isArray(res.data) ? res.data : []
+      totalVentas.value = ventas.value.length
+      totalPages.value = 1
+    }
   } catch (err) {
     console.error(err)
+  } finally {
+    cargando.value = false
   }
 }
 
-const ventasFiltradas = computed(() => {
-  let list = [...ventas.value]
-  if (filtroEstado.value) {
-    list = list.filter((v) => v.estado === filtroEstado.value)
-  }
-  if (filtroBusqueda.value.trim()) {
-    const s = filtroBusqueda.value.toLowerCase()
-    list = list.filter(
-      (v) =>
-        v.codigoComprobante?.toLowerCase().includes(s) ||
-        v.cliente?.nombre?.toLowerCase().includes(s) ||
-        v.cliente?.apellido?.toLowerCase().includes(s) ||
-        v.cliente?.ciNit?.toLowerCase().includes(s),
-    )
-  }
-  return list
-})
+let debounceTimer: any = null
+const onSearchInput = () => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    cargarVentas(1)
+  }, 350)
+}
 
 const verDetalle = (v: any) => {
   ventaSeleccionada.value = v
 }
 
-const imprimirModal = () => {
-  window.print()
+const descargarTicketPdf = (v: any) => {
+  const base = http.defaults.baseURL || '/api/v1/'
+  const url = `${base.replace(/\/+$/, '')}/documentos/ticket/${v.id}`
+  window.open(url, '_blank')
+}
+
+const descargarFacturaPdf = (v: any) => {
+  const base = http.defaults.baseURL || '/api/v1/'
+  const url = `${base.replace(/\/+$/, '')}/documentos/factura/${v.id}`
+  window.open(url, '_blank')
+}
+
+const exportarExcel = () => {
+  const base = http.defaults.baseURL || '/api/v1/'
+  const url = `${base.replace(/\/+$/, '')}/documentos/ventas/excel`
+  window.open(url, '_blank')
 }
 
 const cancelarVenta = async (v: any) => {
@@ -253,7 +354,7 @@ const cancelarVenta = async (v: any) => {
         timer: 1800,
         showConfirmButton: false,
       })
-      cargarVentas()
+      cargarVentas(page.value)
     } catch (err: any) {
       Swal.fire({
         icon: 'error',
@@ -267,6 +368,6 @@ const cancelarVenta = async (v: any) => {
 }
 
 onMounted(() => {
-  cargarVentas()
+  cargarVentas(1)
 })
 </script>
