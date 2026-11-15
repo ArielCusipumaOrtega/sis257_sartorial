@@ -18,10 +18,10 @@
             <thead>
               <tr>
                 <th>Razón Social</th>
-                <th>NIT / Identificación</th>
+                <th class="text-nowrap-cell">NIT / Identificación</th>
                 <th>Contacto & Teléfono</th>
                 <th>Dirección</th>
-                <th class="text-end">Acciones</th>
+                <th class="cell-actions text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -30,12 +30,14 @@
                   <div class="fw-bold text-white">{{ p.nombre }}</div>
                   <small class="text-secondary">{{ p.correo || 'Sin correo' }}</small>
                 </td>
-                <td class="text-gold fw-bold">{{ p.nit || 'S/N' }}</td>
+                <td class="text-gold fw-bold text-nowrap-cell cell-nit">{{ p.nit || 'S/N' }}</td>
                 <td>{{ p.telefono || 'Sin teléfono' }}</td>
                 <td class="small text-secondary">{{ p.direccion || 'Sin dirección' }}</td>
-                <td class="text-end">
-                  <button class="btn btn-sm btn-outline-gold me-2" @click="abrirEditar(p)"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-outline-danger" @click="eliminar(p)"><i class="bi bi-trash"></i></button>
+                <td class="cell-actions text-end">
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-gold" @click="abrirEditar(p)"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" @click="eliminar(p)"><i class="bi bi-trash"></i></button>
+                  </div>
                 </td>
               </tr>
             </tbody>

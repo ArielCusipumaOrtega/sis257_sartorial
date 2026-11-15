@@ -18,10 +18,10 @@
             <thead>
               <tr>
                 <th>Firma / Marca</th>
-                <th>País de Origen</th>
+                <th class="text-nowrap-cell">País de Origen</th>
                 <th>Descripción & Prestigio</th>
-                <th>Prendas en Stock</th>
-                <th class="text-end">Acciones</th>
+                <th class="text-nowrap-cell">Prendas en Stock</th>
+                <th class="cell-actions text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -29,18 +29,20 @@
                 <td>
                   <div class="fw-bold text-gold font-display fs-6">{{ m.nombre }}</div>
                 </td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge bg-dark border border-secondary text-white">
                     <i class="bi bi-geo-alt me-1 text-gold"></i>{{ m.paisOrigen || 'Internacional' }}
                   </span>
                 </td>
                 <td class="small text-secondary">{{ m.descripcion || 'Casa de moda' }}</td>
-                <td>
+                <td class="text-nowrap-cell cell-stock">
                   <span class="badge bg-secondary">{{ m.productos?.length || 0 }} modelos</span>
                 </td>
-                <td class="text-end">
-                  <button class="btn btn-sm btn-outline-gold me-2" @click="abrirEditar(m)"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-outline-danger" @click="eliminar(m)"><i class="bi bi-trash"></i></button>
+                <td class="cell-actions text-end">
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-gold" @click="abrirEditar(m)"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" @click="eliminar(m)"><i class="bi bi-trash"></i></button>
+                  </div>
                 </td>
               </tr>
             </tbody>

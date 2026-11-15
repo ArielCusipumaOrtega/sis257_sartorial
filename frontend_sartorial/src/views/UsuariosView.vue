@@ -18,31 +18,33 @@
             <thead>
               <tr>
                 <th>Nombre Completo</th>
-                <th>Usuario</th>
+                <th class="text-nowrap-cell">Usuario</th>
                 <th>Correo</th>
-                <th>Rol Asignado</th>
-                <th>Estado</th>
-                <th class="text-end">Acciones</th>
+                <th class="text-nowrap-cell">Rol Asignado</th>
+                <th class="text-nowrap-cell">Estado</th>
+                <th class="cell-actions text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="u in usuarios" :key="u.id">
                 <td class="fw-bold text-white">{{ u.nombre }} {{ u.apellido }}</td>
-                <td class="text-gold fw-bold">{{ u.usuario }}</td>
+                <td class="text-gold fw-bold text-nowrap-cell">@{{ u.usuario }}</td>
                 <td class="small text-secondary">{{ u.correo }}</td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="u.rol?.nombre === 'ADMIN' ? 'bg-gold' : 'bg-secondary'">
                     {{ u.rol?.nombre }}
                   </span>
                 </td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="u.estado ? 'bg-success' : 'bg-danger'">
                     {{ u.estado ? 'Activo' : 'Inactivo' }}
                   </span>
                 </td>
-                <td class="text-end">
-                  <button class="btn btn-sm btn-outline-gold me-2" @click="abrirEditar(u)"><i class="bi bi-pencil"></i></button>
-                  <button v-if="u.usuario !== 'admin'" class="btn btn-sm btn-outline-danger" @click="eliminar(u)"><i class="bi bi-trash"></i></button>
+                <td class="cell-actions text-end">
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-gold" @click="abrirEditar(u)"><i class="bi bi-pencil"></i></button>
+                    <button v-if="u.usuario !== 'admin'" class="btn btn-sm btn-outline-danger" @click="eliminar(u)"><i class="bi bi-trash"></i></button>
+                  </div>
                 </td>
               </tr>
             </tbody>

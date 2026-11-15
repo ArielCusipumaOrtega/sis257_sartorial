@@ -38,12 +38,12 @@
             <thead>
               <tr>
                 <th>Cliente</th>
-                <th>CI / NIT</th>
-                <th>Teléfono</th>
+                <th class="text-nowrap-cell">CI / NIT</th>
+                <th class="text-nowrap-cell">Teléfono</th>
                 <th>Correo Electrónico</th>
-                <th>Talla Habitual</th>
+                <th class="text-nowrap-cell">Talla Habitual</th>
                 <th>Dirección</th>
-                <th class="text-end">Acciones</th>
+                <th class="cell-actions text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -52,24 +52,26 @@
                   <div class="fw-bold text-white">{{ c.nombre }} {{ c.apellido }}</div>
                   <small class="text-secondary">Registrado: {{ formatDate(c.fechaCreacion) }}</small>
                 </td>
-                <td class="text-gold fw-bold">{{ c.ciNit || 'S/N' }}</td>
-                <td>{{ c.telefono || 'Sin teléfono' }}</td>
+                <td class="text-gold fw-bold text-nowrap-cell cell-nit">{{ c.ciNit || 'S/N' }}</td>
+                <td class="text-nowrap-cell">{{ c.telefono || 'Sin teléfono' }}</td>
                 <td class="small">{{ c.correo || 'Sin correo' }}</td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge-talla">{{ c.preferenciaTalla || 'General' }}</span>
                 </td>
                 <td class="small text-secondary">{{ c.direccion || 'Sin dirección' }}</td>
-                <td class="text-end">
-                  <template v-if="c.fechaEliminacion">
-                    <span class="badge bg-danger me-2">Dado de baja</span>
-                    <button class="btn btn-sm btn-outline-success" @click="restaurar(c)" title="Restaurar Cliente">
-                      <i class="bi bi-arrow-counterclockwise"></i> Restaurar
-                    </button>
-                  </template>
-                  <template v-else>
-                    <button class="btn btn-sm btn-outline-gold me-2" @click="abrirEditar(c)"><i class="bi bi-pencil"></i></button>
-                    <button v-if="c.ciNit !== '0'" class="btn btn-sm btn-outline-danger" @click="eliminar(c)"><i class="bi bi-trash"></i></button>
-                  </template>
+                <td class="cell-actions text-end">
+                  <div class="btn-group">
+                    <template v-if="c.fechaEliminacion">
+                      <span class="badge bg-danger me-2">Dado de baja</span>
+                      <button class="btn btn-sm btn-outline-success" @click="restaurar(c)" title="Restaurar Cliente">
+                        <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                      </button>
+                    </template>
+                    <template v-else>
+                      <button class="btn btn-sm btn-outline-gold" @click="abrirEditar(c)"><i class="bi bi-pencil"></i></button>
+                      <button v-if="c.ciNit !== '0'" class="btn btn-sm btn-outline-danger" @click="eliminar(c)"><i class="bi bi-trash"></i></button>
+                    </template>
+                  </div>
                 </td>
               </tr>
             </tbody>

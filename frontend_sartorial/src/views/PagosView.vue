@@ -17,25 +17,25 @@
           <table class="table-sartorial mb-0">
             <thead>
               <tr>
-                <th>ID Pago</th>
-                <th>Venta / Comprobante</th>
+                <th class="text-nowrap-cell">ID Pago</th>
+                <th class="text-nowrap-cell">Venta / Comprobante</th>
                 <th>Cliente</th>
-                <th>Método de Pago</th>
+                <th class="text-nowrap-cell">Método de Pago</th>
                 <th>Referencia Bancaria</th>
                 <th>Fecha y Hora</th>
-                <th class="text-end">Monto Liquidado</th>
+                <th class="text-nowrap-cell text-end">Monto Liquidado</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="p in pagos" :key="p.id">
-                <td class="text-gold fw-bold">#PG-{{ p.id }}</td>
-                <td>
+                <td class="text-gold fw-bold text-nowrap-cell">#PG-{{ p.id }}</td>
+                <td class="text-nowrap-cell">
                   <span class="fw-bold text-white">{{ p.venta?.codigoComprobante || 'TKT-' + p.ventaId }}</span>
                 </td>
                 <td>
                   {{ p.venta?.cliente ? `${p.venta.cliente.nombre} ${p.venta.cliente.apellido}` : 'Consumidor Final' }}
                 </td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="getMetodoBadge(p.metodoPago?.nombre)">
                     <i :class="getMetodoIcon(p.metodoPago?.nombre)" class="me-1"></i>
                     {{ p.metodoPago?.nombre || 'General' }}
@@ -43,7 +43,7 @@
                 </td>
                 <td class="small text-secondary">{{ p.referencia || '-' }}</td>
                 <td class="small text-secondary">{{ formatDate(p.fecha) }}</td>
-                <td class="text-end fw-bold text-gold fs-6">{{ formatPrice(p.monto) }}</td>
+                <td class="text-end fw-bold text-gold fs-6 text-nowrap-cell cell-price">{{ formatPrice(p.monto) }}</td>
               </tr>
               <tr v-if="pagos.length === 0">
                 <td colspan="7" class="text-center text-secondary py-5">No hay pagos registrados</td>

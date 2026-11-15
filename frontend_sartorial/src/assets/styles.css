@@ -287,7 +287,28 @@ body {
   margin-bottom: 6px;
 }
 
-/* ── Custom Tables ── */
+/* ── Custom Tables & Responsive Scrollbar ── */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
 .table-sartorial {
   width: 100%;
   color: var(--text-primary);
@@ -296,25 +317,63 @@ body {
 }
 
 .table-sartorial th {
-  background: rgba(28, 36, 51, 0.7);
+  background: rgba(28, 36, 51, 0.95);
   color: var(--primary);
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   font-weight: 700;
   border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
 }
 
 .table-sartorial td {
-  padding: 14px 16px;
+  padding: 12px 14px;
   vertical-align: middle;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   font-size: 0.88rem;
 }
 
 .table-sartorial tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(212, 175, 55, 0.04);
+}
+
+/* Celdas con protección contra cortes o saltos indeseados (solo datos cortos) */
+.text-nowrap-cell,
+.table-sartorial .text-nowrap,
+.table-sartorial td.cell-actions,
+.table-sartorial th.cell-actions,
+.table-sartorial td.cell-price,
+.table-sartorial td.cell-stock,
+.table-sartorial td.cell-sku,
+.table-sartorial td.cell-badge,
+.table-sartorial td.cell-nit {
+  white-space: nowrap !important;
+}
+
+/* Columna de acciones compacta y protegida */
+.table-sartorial td.cell-actions,
+.table-sartorial th.cell-actions {
+  width: 1%;
+  white-space: nowrap !important;
+  text-align: right;
+}
+
+.table-sartorial .btn-group {
+  white-space: nowrap !important;
+  flex-wrap: nowrap !important;
+  display: inline-flex !important;
+}
+
+/* Campos largos permiten salto natural de línea sin desbordar ni deformar la tabla */
+.table-sartorial td.cell-wrap,
+.table-sartorial th.cell-wrap,
+.table-sartorial td.cell-title,
+.table-sartorial td.cell-desc,
+.table-sartorial td.cell-date {
+  white-space: normal !important;
+  word-break: normal;
 }
 
 /* ── Badges ── */

@@ -56,13 +56,13 @@
             <thead>
               <tr>
                 <th>Prenda</th>
-                <th>SKU</th>
+                <th class="text-nowrap-cell">SKU</th>
                 <th>Categoría / Firma</th>
-                <th>Talla & Corte</th>
+                <th class="text-nowrap-cell">Talla & Corte</th>
                 <th>Tejido / Color</th>
-                <th>Precio Venta</th>
-                <th>Stock</th>
-                <th v-if="authStore.isAdmin" class="text-end">Acciones</th>
+                <th class="text-nowrap-cell">Precio Venta</th>
+                <th class="text-nowrap-cell">Stock</th>
+                <th v-if="authStore.isAdmin" class="cell-actions text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -76,12 +76,12 @@
                     </div>
                   </div>
                 </td>
-                <td class="text-gold fw-bold small">{{ p.codigo }}</td>
+                <td class="text-gold fw-bold small text-nowrap-cell cell-sku">{{ p.codigo }}</td>
                 <td>
                   <div class="text-white small">{{ p.categoria?.nombre || 'General' }}</div>
                   <small class="text-secondary">{{ p.marca?.nombre || 'Sartorial' }}</small>
                 </td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge-talla me-1">{{ p.talla }}</span>
                   <span class="badge-corte">{{ p.corte }}</span>
                 </td>
@@ -89,32 +89,34 @@
                   <div class="small text-white">{{ p.material }}</div>
                   <small class="text-secondary">{{ p.color }}</small>
                 </td>
-                <td>
+                <td class="text-nowrap-cell cell-price">
                   <div class="fw-bold text-gold">{{ formatPrice(p.precioFinal || p.precioVenta) }}</div>
                   <small v-if="p.descuentoPorcentaje > 0" class="text-danger">
                     -{{ p.descuentoPorcentaje }}% (Antes {{ formatPrice(p.precioVenta) }})
                   </small>
                 </td>
-                <td>
+                <td class="text-nowrap-cell cell-stock">
                   <span :class="p.stock <= p.stockMinimo ? 'badge-stock-low' : 'badge-stock-ok'">
                     {{ p.stock }} unid. (mín {{ p.stockMinimo }})
                   </span>
                 </td>
-                <td v-if="authStore.isAdmin" class="text-end">
-                  <template v-if="p.fechaEliminacion">
-                    <span class="badge bg-danger me-2">Dado de baja</span>
-                    <button class="btn btn-sm btn-outline-success" @click="restaurarPrenda(p)" title="Restaurar Prenda">
-                      <i class="bi bi-arrow-counterclockwise"></i> Restaurar
-                    </button>
-                  </template>
-                  <template v-else>
-                    <button class="btn btn-sm btn-outline-gold me-2" @click="abrirModalEditar(p)" title="Editar">
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" @click="eliminarPrenda(p)" title="Dar de baja (Soft Delete)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </template>
+                <td v-if="authStore.isAdmin" class="cell-actions text-end">
+                  <div class="btn-group">
+                    <template v-if="p.fechaEliminacion">
+                      <span class="badge bg-danger me-2">Dado de baja</span>
+                      <button class="btn btn-sm btn-outline-success" @click="restaurarPrenda(p)" title="Restaurar Prenda">
+                        <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                      </button>
+                    </template>
+                    <template v-else>
+                      <button class="btn btn-sm btn-outline-gold" @click="abrirModalEditar(p)" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger" @click="eliminarPrenda(p)" title="Dar de baja (Soft Delete)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </template>
+                  </div>
                 </td>
               </tr>
               <tr v-if="prendasFiltradas.length === 0">

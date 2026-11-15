@@ -33,18 +33,18 @@
           <table class="table-sartorial mb-0">
             <thead>
               <tr>
-                <th>Venta / Ticket</th>
+                <th class="text-nowrap-cell">Venta / Ticket</th>
                 <th>Cliente Receptor</th>
                 <th>Dirección & Destino</th>
-                <th>Contacto</th>
-                <th>Costo Portatraje</th>
-                <th>Estado del Envío</th>
-                <th class="text-end">Modificar Estado</th>
+                <th class="text-nowrap-cell">Contacto</th>
+                <th class="text-nowrap-cell">Costo Portatraje</th>
+                <th class="text-nowrap-cell">Estado del Envío</th>
+                <th class="cell-actions text-end">Modificar Estado</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="d in deliveriesFiltrados" :key="d.id">
-                <td class="fw-bold text-gold">
+                <td class="fw-bold text-gold text-nowrap-cell">
                   {{ d.venta?.codigoComprobante || 'TKT-' + d.ventaId }}
                 </td>
                 <td>
@@ -55,18 +55,18 @@
                   <div class="text-white small">{{ d.direccion }}</div>
                   <small class="text-secondary">{{ d.referencia || 'Sin referencias extras' }}</small>
                 </td>
-                <td>
+                <td class="text-nowrap-cell">
                   <a :href="'https://wa.me/591' + d.telefonoContacto" target="_blank" class="btn btn-sm btn-outline-success">
                     <i class="bi bi-whatsapp me-1"></i> {{ d.telefonoContacto }}
                   </a>
                 </td>
-                <td>{{ formatPrice(d.costoDelivery) }}</td>
-                <td>
+                <td class="text-nowrap-cell cell-price">{{ formatPrice(d.costoDelivery) }}</td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="getEstadoBadge(d.estado)">
                     {{ d.estado }}
                   </span>
                 </td>
-                <td class="text-end">
+                <td class="cell-actions text-end">
                   <select
                     :value="d.estado"
                     class="form-select form-select-sm d-inline-block w-auto"

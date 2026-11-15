@@ -41,49 +41,51 @@
           <table class="table-sartorial mb-0">
             <thead>
               <tr>
-                <th>Comprobante</th>
+                <th class="text-nowrap-cell">Comprobante</th>
                 <th>Cliente</th>
                 <th>Fecha y Hora</th>
-                <th>Total Facturado</th>
-                <th>Canal / Entrega</th>
+                <th class="text-nowrap-cell">Total Facturado</th>
+                <th class="text-nowrap-cell">Canal / Entrega</th>
                 <th>Atendido Por</th>
-                <th>Estado</th>
-                <th class="text-end">Acciones</th>
+                <th class="text-nowrap-cell">Estado</th>
+                <th class="cell-actions text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="v in ventasFiltradas" :key="v.id">
-                <td class="fw-bold text-gold">{{ v.codigoComprobante || 'TKT-' + v.id }}</td>
+                <td class="fw-bold text-gold text-nowrap-cell">{{ v.codigoComprobante || 'TKT-' + v.id }}</td>
                 <td>
                   <div class="fw-bold text-white">{{ v.cliente ? `${v.cliente.nombre} ${v.cliente.apellido}` : 'Consumidor Final' }}</div>
                   <small class="text-secondary">CI: {{ v.cliente?.ciNit || '0' }}</small>
                 </td>
                 <td class="text-secondary small">{{ formatDate(v.fecha) }}</td>
-                <td class="fw-bold text-white fs-6">{{ formatPrice(v.total) }}</td>
-                <td>
+                <td class="fw-bold text-white fs-6 text-nowrap-cell cell-price">{{ formatPrice(v.total) }}</td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="v.tipoEntrega === 'Delivery' ? 'bg-info text-dark' : 'bg-dark border border-secondary text-secondary'">
                     <i :class="v.tipoEntrega === 'Delivery' ? 'bi bi-truck' : 'bi bi-shop'" class="me-1"></i>
                     {{ v.tipoEntrega }}
                   </span>
                 </td>
                 <td class="small text-secondary">{{ v.usuario ? `${v.usuario.nombre} ${v.usuario.apellido}` : 'Tienda Online' }}</td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="v.estado === 'Confirmada' ? 'bg-success' : 'bg-danger'">
                     {{ v.estado }}
                   </span>
                 </td>
-                <td class="text-end">
-                  <button class="btn btn-sm btn-outline-gold me-2" @click="verDetalle(v)" title="Ver Detalle">
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <button
-                    v-if="v.estado === 'Confirmada' && authStore.isAdmin"
-                    class="btn btn-sm btn-outline-danger"
-                    @click="cancelarVenta(v)"
-                    title="Anular / Revertir Stock"
-                  >
-                    <i class="bi bi-x-circle"></i>
-                  </button>
+                <td class="cell-actions text-end">
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-gold" @click="verDetalle(v)" title="Ver Detalle">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button
+                      v-if="v.estado === 'Confirmada' && authStore.isAdmin"
+                      class="btn btn-sm btn-outline-danger"
+                      @click="cancelarVenta(v)"
+                      title="Anular / Revertir Stock"
+                    >
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr v-if="ventasFiltradas.length === 0">

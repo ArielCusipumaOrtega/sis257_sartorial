@@ -90,33 +90,33 @@
           <table class="table-sartorial mb-0">
             <thead>
               <tr>
-                <th>N° Turno</th>
+                <th class="text-nowrap-cell">N° Turno</th>
                 <th>Cajero / Asesor</th>
                 <th>Apertura</th>
                 <th>Cierre</th>
-                <th>Monto Apertura</th>
-                <th>Ventas Efectivo</th>
-                <th>Monto Cierre Real</th>
-                <th>Diferencia Arqueo</th>
-                <th>Estado</th>
+                <th class="text-nowrap-cell">Monto Apertura</th>
+                <th class="text-nowrap-cell">Ventas Efectivo</th>
+                <th class="text-nowrap-cell">Monto Cierre Real</th>
+                <th class="text-nowrap-cell">Diferencia Arqueo</th>
+                <th class="text-nowrap-cell">Estado</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="c in historialCajas" :key="c.id">
-                <td class="text-gold fw-bold">#CJ-{{ c.id }}</td>
+                <td class="text-gold fw-bold text-nowrap-cell">#CJ-{{ c.id }}</td>
                 <td class="fw-bold text-white">{{ c.usuario ? `${c.usuario.nombre} ${c.usuario.apellido}` : 'Cajero' }}</td>
                 <td class="small text-secondary">{{ formatDate(c.fechaApertura) }}</td>
                 <td class="small text-secondary">{{ c.fechaCierre ? formatDate(c.fechaCierre) : 'En Curso' }}</td>
-                <td>{{ formatPrice(c.montoApertura) }}</td>
-                <td class="text-success">{{ formatPrice(c.ventasEfectivo) }}</td>
-                <td class="fw-bold">{{ c.montoCierre ? formatPrice(c.montoCierre) : '-' }}</td>
-                <td>
+                <td class="text-nowrap-cell cell-price">{{ formatPrice(c.montoApertura) }}</td>
+                <td class="text-success text-nowrap-cell cell-price">{{ formatPrice(c.ventasEfectivo) }}</td>
+                <td class="fw-bold text-nowrap-cell cell-price">{{ c.montoCierre ? formatPrice(c.montoCierre) : '-' }}</td>
+                <td class="text-nowrap-cell cell-badge">
                   <span v-if="c.fechaCierre" class="badge" :class="Number(c.diferencia) === 0 ? 'bg-success' : Number(c.diferencia) > 0 ? 'bg-info' : 'bg-danger'">
                     {{ Number(c.diferencia) >= 0 ? '+' : '' }}{{ formatPrice(c.diferencia) }}
                   </span>
                   <span v-else class="text-secondary">-</span>
                 </td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="c.estado === 'Abierta' ? 'bg-success' : 'bg-secondary'">
                     {{ c.estado }}
                   </span>

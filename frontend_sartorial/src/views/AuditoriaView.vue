@@ -36,9 +36,9 @@
               <tr>
                 <th>Fecha / Hora</th>
                 <th>Usuario Ejecutor</th>
-                <th>Acción</th>
-                <th>Tabla Afectada</th>
-                <th>ID Registro</th>
+                <th class="text-nowrap-cell">Acción</th>
+                <th class="text-nowrap-cell">Tabla Afectada</th>
+                <th class="text-nowrap-cell">ID Registro</th>
                 <th>Detalle de Mutación</th>
               </tr>
             </thead>
@@ -46,13 +46,13 @@
               <tr v-for="log in logs" :key="log.id">
                 <td class="small text-secondary">{{ formatDate(log.fecha) }}</td>
                 <td class="fw-bold text-white">{{ log.usuarioNombre }}</td>
-                <td>
+                <td class="text-nowrap-cell cell-badge">
                   <span class="badge" :class="log.accion === 'CREAR' ? 'bg-success' : log.accion === 'EDITAR' ? 'bg-warning text-dark' : 'bg-danger'">
                     {{ log.accion }}
                   </span>
                 </td>
-                <td class="text-gold fw-bold small">{{ log.tabla }}</td>
-                <td>{{ log.registroId || '-' }}</td>
+                <td class="text-gold fw-bold small text-nowrap-cell">{{ log.tabla }}</td>
+                <td class="text-nowrap-cell">{{ log.registroId || '-' }}</td>
                 <td>
                   <code class="small text-secondary" style="font-size: 0.75rem; word-break: break-all;">
                     {{ log.detalle ? log.detalle.slice(0, 120) + (log.detalle.length > 120 ? '...' : '') : '-' }}

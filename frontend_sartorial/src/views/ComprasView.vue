@@ -17,18 +17,18 @@
           <table class="table-sartorial mb-0">
             <thead>
               <tr>
-                <th>ID</th>
+                <th class="text-nowrap-cell">ID</th>
                 <th>Proveedor</th>
                 <th>Fecha</th>
                 <th>Observaciones</th>
                 <th>Registrado Por</th>
-                <th>Total Facturado</th>
-                <th class="text-end">Acciones</th>
+                <th class="text-nowrap-cell">Total Facturado</th>
+                <th class="cell-actions text-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="c in compras" :key="c.id">
-                <td class="text-gold fw-bold">#CMP-{{ c.id }}</td>
+                <td class="text-gold fw-bold text-nowrap-cell">#CMP-{{ c.id }}</td>
                 <td>
                   <div class="fw-bold text-white">{{ c.proveedor?.nombre || 'Proveedor' }}</div>
                   <small class="text-secondary">NIT: {{ c.proveedor?.nit || 'S/N' }}</small>
@@ -36,11 +36,13 @@
                 <td class="small text-secondary">{{ formatDate(c.fecha) }}</td>
                 <td class="small text-secondary">{{ c.observaciones || 'Ingreso de mercadería' }}</td>
                 <td class="small text-white">{{ c.usuario ? `${c.usuario.nombre} ${c.usuario.apellido}` : 'Admin' }}</td>
-                <td class="fw-bold text-gold">{{ formatPrice(c.total) }}</td>
-                <td class="text-end">
-                  <button class="btn btn-sm btn-outline-gold" @click="verDetalle(c)">
-                    <i class="bi bi-eye me-1"></i> Desglose
-                  </button>
+                <td class="fw-bold text-gold text-nowrap-cell cell-price">{{ formatPrice(c.total) }}</td>
+                <td class="cell-actions text-end">
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-gold" @click="verDetalle(c)">
+                      <i class="bi bi-eye me-1"></i> Desglose
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr v-if="compras.length === 0">
