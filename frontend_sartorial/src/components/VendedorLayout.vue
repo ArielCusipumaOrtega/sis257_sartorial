@@ -80,7 +80,7 @@
       </main>
 
       <footer class="p-3 text-center border-top border-secondary text-secondary" style="font-size: 0.8rem; background: var(--bg-card);">
-        &copy; 2026 Sartorial Prestige Boutique - Terminal de Asesor de Ventas & POS (SIS257)
+        &copy; 2026 Sartorial Prestige Boutique &bull; Terminal de Asesor de Estilo & Punto de Venta (POS)
       </footer>
     </div>
   </div>

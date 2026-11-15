@@ -68,8 +68,8 @@
         <div class="card-sartorial p-4 h-100">
           <h5 class="font-serif text-gold mb-3"><i class="bi bi-info-circle me-2"></i> Información del Sistema</h5>
           <div class="small text-secondary mb-3">
-            <strong class="text-white d-block mb-1">Materia Académica:</strong>
-            SIS257 &bull; Desarrollo de Aplicaciones Internet II
+            <strong class="text-white d-block mb-1">Ecosistema Boutique:</strong>
+            Sartorial Prestige &bull; Suite Comercial de Confección & POS
           </div>
           <div class="small text-secondary mb-3">
             <strong class="text-white d-block mb-1">Arquitectura:</strong>

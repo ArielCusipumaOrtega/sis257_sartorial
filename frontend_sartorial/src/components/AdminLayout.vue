@@ -87,9 +87,14 @@
           <i class="bi bi-list fs-4 text-white"></i>
         </button>
 
-        <div class="d-flex align-items-center gap-3">
-          <router-link to="/" class="btn btn-sm btn-outline-gold d-none d-sm-inline-flex align-items-center gap-2">
-            <i class="bi bi-shop"></i> Ver Tienda Online
+        <div class="d-flex align-items-center gap-2 gap-sm-3">
+          <router-link to="/" class="btn btn-outline-gold btn-sm d-flex align-items-center gap-2" title="Ir a la Tienda / Catálogo">
+            <i class="bi bi-shop"></i>
+            <span>Catálogo</span>
+          </router-link>
+
+          <router-link to="/admin/ventas/nueva" class="btn btn-gold btn-sm d-none d-sm-flex align-items-center gap-2">
+            <i class="bi bi-cart-plus"></i> Abrir POS
           </router-link>
         </div>
 
@@ -117,7 +122,7 @@
       </main>
 
       <footer class="p-3 text-center border-top border-secondary text-secondary" style="font-size: 0.8rem; background: var(--bg-card);">
-        &copy; 2026 Sartorial Prestige Boutique - Sistema de Gestión de Confección Formal & POS (SIS257)
+        &copy; 2026 Sartorial Prestige Boutique &bull; Confección Formal, Sastrería a Medida & Alta Costura
       </footer>
     </div>
   </div>
