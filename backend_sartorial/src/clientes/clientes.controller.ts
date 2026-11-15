@@ -6,6 +6,7 @@ import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Usuario } from '../usuarios/entities/usuario.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('Clientes')
 @Controller('clientes')
@@ -21,12 +22,9 @@ export class ClientesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar o buscar clientes por término' })
-  findAll(
-    @Query('search') search?: string,
-    @Query('conInactivos') conInactivos?: string,
-  ) {
-    return this.clientesService.findAll(search, conInactivos === 'true');
+  @ApiOperation({ summary: 'Listar o buscar clientes con soporte de paginación y búsqueda' })
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.clientesService.findAll(paginationDto);
   }
 
   @Get(':id')
@@ -58,7 +56,7 @@ export class ClientesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id/restaurar')
-  @ApiOperation({ summary: 'Restaurar cliente dado de baja' })
+  @ApiOperation({ summary: 'Restaurar cliente eliminado' })
   restore(@Param('id') id: string, @CurrentUser() usuario: Usuario) {
     return this.clientesService.restore(+id, usuario);
   }

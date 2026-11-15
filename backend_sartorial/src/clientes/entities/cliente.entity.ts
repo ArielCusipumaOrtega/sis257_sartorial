@@ -1,5 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, DeleteDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Venta } from '../../ventas/entities/venta.entity';
+import { Usuario } from '../../usuarios/entities/usuario.entity';
+import { MedidaCliente } from '../../medidas-cliente/entities/medida-cliente.entity';
 
 @Entity('clientes')
 export class Cliente {
@@ -36,6 +47,16 @@ export class Cliente {
   @DeleteDateColumn({ name: 'fecha_eliminacion', type: 'timestamp', nullable: true })
   fechaEliminacion: Date;
 
+  @Column({ name: 'usuario_id', nullable: true })
+  usuarioId?: number;
+
+  @OneToOne(() => Usuario, (usuario) => usuario.cliente, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'usuario_id' })
+  usuario?: Usuario;
+
   @OneToMany(() => Venta, (venta) => venta.cliente)
   ventas: Venta[];
+
+  @OneToMany(() => MedidaCliente, (medida) => medida.cliente)
+  medidas: MedidaCliente[];
 }
