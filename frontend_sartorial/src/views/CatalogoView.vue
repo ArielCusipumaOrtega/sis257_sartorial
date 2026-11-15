@@ -311,8 +311,26 @@
             <span class="fw-bold text-gold">{{ formatPrice(subtotalCarrito) }}</span>
           </div>
 
-          <button class="btn btn-gold w-100 py-3 font-display" style="letter-spacing: 1.5px;" @click="abrirCheckout">
-            FINALIZAR COMPRA
+          <!-- Aviso si no ha iniciado sesión -->
+          <div
+            v-if="!authStore.isAuthenticated"
+            class="p-3 rounded border border-warning mb-3 small d-flex align-items-center gap-2"
+            style="background: rgba(212, 175, 55, 0.12); color: #FCD34D;"
+          >
+            <i class="bi bi-info-circle-fill fs-5 text-gold flex-shrink-0"></i>
+            <div>
+              <strong>Inicia sesión para ordenar:</strong> Podrás registrar tu pedido exclusivo y acceder a seguimiento en tiempo real.
+            </div>
+          </div>
+
+          <button
+            class="btn w-100 py-3 font-display"
+            :class="authStore.isAuthenticated ? 'btn-gold' : 'btn-outline-gold'"
+            style="letter-spacing: 1.5px;"
+            @click="abrirCheckout"
+          >
+            <i class="bi me-2" :class="authStore.isAuthenticated ? 'bi-check2-circle' : 'bi-box-arrow-in-right'"></i>
+            {{ authStore.isAuthenticated ? 'FINALIZAR COMPRA' : 'INICIAR SESIÓN PARA COMPRAR' }}
           </button>
         </div>
       </div>
@@ -393,12 +411,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import http from '@/plugins/axios'
 import { getImageUrl, formatPrice } from '@/helpers'
 import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const cargando = ref(true)
 const prendas = ref<any[]>([])
@@ -423,17 +443,50 @@ const rutaAdministracion = computed(() => {
   return '/login'
 })
 
-// Carrito
+// Carrito persistente
 const carrito = ref<any[]>([])
+
+const loadCart = () => {
+  const saved = localStorage.getItem('sartorial_cart')
+  if (saved) {
+    try {
+      carrito.value = JSON.parse(saved)
+    } catch (e) {
+      carrito.value = []
+    }
+  }
+}
+
+const saveCart = () => {
+  localStorage.setItem('sartorial_cart', JSON.stringify(carrito.value))
+}
 
 const checkoutForm = ref({
   nombre: authStore.user ? `${authStore.user.nombre} ${authStore.user.apellido}` : '',
-  ciNit: '',
-  telefono: '',
+  ciNit: authStore.user?.cliente?.ciNit || '',
+  telefono: authStore.user?.cliente?.telefono || '',
   tipoEntrega: 'Tienda',
   direccion: '',
   metodoPagoId: 1,
 })
+
+watch(
+  () => authStore.user,
+  (newUser) => {
+    if (newUser) {
+      if (!checkoutForm.value.nombre && (newUser.nombre || newUser.apellido)) {
+        checkoutForm.value.nombre = `${newUser.nombre || ''} ${newUser.apellido || ''}`.trim()
+      }
+      if (!checkoutForm.value.ciNit && (newUser.cliente?.ciNit || newUser.ciNit)) {
+        checkoutForm.value.ciNit = newUser.cliente?.ciNit || newUser.ciNit
+      }
+      if (!checkoutForm.value.telefono && (newUser.cliente?.telefono || newUser.telefono)) {
+        checkoutForm.value.telefono = newUser.cliente?.telefono || newUser.telefono || ''
+      }
+    }
+  },
+  { immediate: true },
+)
 
 const totalPrendasCarrito = computed(() => {
   return carrito.value.reduce((acc, item) => acc + item.cantidad, 0)
@@ -531,6 +584,7 @@ const agregarAlCarrito = (p: any) => {
   } else {
     carrito.value.push({ ...p, cantidad: 1 })
   }
+  saveCart()
   carritoOpen.value = true
 }
 
@@ -538,22 +592,57 @@ const modificarCantidad = (item: any, delta: number) => {
   item.cantidad += delta
   if (item.cantidad <= 0) {
     quitarDelCarrito(item)
+  } else {
+    saveCart()
   }
 }
 
 const quitarDelCarrito = (item: any) => {
   carrito.value = carrito.value.filter((i) => i.id !== item.id)
+  saveCart()
 }
 
-const abrirCheckout = () => {
+const abrirCheckout = async () => {
+  if (carrito.value.length === 0) return
+
+  // Validación: Se requiere sesión activa para procesar la compra
+  if (!authStore.isAuthenticated) {
+    authStore.returnUrl = '/'
+    carritoOpen.value = false
+    await Swal.fire({
+      icon: 'info',
+      title: 'Inicio de Sesión Requerido',
+      text: 'Debe iniciar sesión para realizar su compra.',
+      confirmButtonText: 'Ir a Iniciar Sesión',
+      confirmButtonColor: '#D4AF37',
+      showCancelButton: true,
+      cancelButtonText: 'Seguir mirando',
+      cancelButtonColor: '#334155',
+      background: '#131A26',
+      color: '#F8FAFC',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.push('/login')
+      }
+    })
+    return
+  }
+
   carritoOpen.value = false
   checkoutOpen.value = true
 }
 
 const procesarPedido = async () => {
+  if (!authStore.isAuthenticated) {
+    abrirCheckout()
+    return
+  }
+
   procesandoPedido.value = true
   try {
     const payload = {
+      clienteId: authStore.user?.clienteId || authStore.user?.cliente?.id || undefined,
+      canal: 'ONLINE_WEB',
       tipoEntrega: checkoutForm.value.tipoEntrega,
       direccion: checkoutForm.value.tipoEntrega === 'Delivery' ? checkoutForm.value.direccion : 'Retiro en Boutique',
       telefonoContacto: checkoutForm.value.telefono,
@@ -577,6 +666,7 @@ const procesarPedido = async () => {
     const res = await http.post('ventas', payload)
     checkoutOpen.value = false
     carrito.value = []
+    saveCart()
 
     Swal.fire({
       icon: 'success',
@@ -584,7 +674,7 @@ const procesarPedido = async () => {
       html: `
         <p class="text-white">Muchas gracias por su preferencia.</p>
         <div class="p-3 my-2 rounded bg-dark border border-warning text-gold font-display">
-          Comprobante: <strong>${res.data.codigoComprobante}</strong>
+          Comprobante: <strong>${res.data.codigoComprobante || 'TKT-' + res.data.id}</strong>
         </div>
         <p class="small text-secondary">Su prenda está siendo preparada y planchada al vapor en nuestro taller.</p>
       `,
@@ -612,6 +702,7 @@ const logout = () => {
 }
 
 onMounted(() => {
+  loadCart()
   cargarDatos()
 })
 </script>
