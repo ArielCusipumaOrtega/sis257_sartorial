@@ -51,13 +51,21 @@ export class ProductosService {
     search?: string;
     esCombo?: boolean;
     conEliminados?: boolean;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
+    all?: boolean;
   }) {
     const qb = this.productoRepository.createQueryBuilder('p')
       .leftJoinAndSelect('p.categoria', 'c')
       .leftJoinAndSelect('p.marca', 'm')
       .leftJoinAndSelect('p.proveedor', 'pr')
-      .leftJoinAndSelect('p.promocion', 'pro')
-      .orderBy('p.id', 'DESC');
+      .leftJoinAndSelect('p.promocion', 'pro');
+
+    const sortField = query?.sortBy ? (query.sortBy.includes('.') ? query.sortBy : `p.${query.sortBy}`) : 'p.id';
+    const sortDirection = query?.sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    qb.orderBy(sortField, sortDirection);
 
     if (query?.conEliminados) {
       qb.withDeleted();
@@ -90,11 +98,26 @@ export class ProductosService {
       );
     }
 
-    const items = await qb.getMany();
+    const page = query?.page ? Math.max(1, Number(query.page)) : null;
+    const limit = query?.limit ? Math.max(1, Math.min(100, Number(query.limit))) : null;
+    const isPaginated = page !== null && limit !== null && !query?.all;
+
+    let items: Producto[];
+    let totalCount = 0;
+
+    if (isPaginated) {
+      qb.skip((page - 1) * limit).take(limit);
+      const [data, count] = await qb.getManyAndCount();
+      items = data;
+      totalCount = count;
+    } else {
+      items = await qb.getMany();
+      totalCount = items.length;
+    }
 
     // Calcular precio final con descuento promocional activo si existe
     const now = new Date();
-    return items.map((p) => {
+    const mapped = items.map((p) => {
       let descuentoPorcentaje = 0;
       if (
         p.promocion &&
@@ -115,6 +138,21 @@ export class ProductosService {
         precioFinal,
       };
     });
+
+    if (isPaginated) {
+      const totalPages = Math.ceil(totalCount / limit) || 1;
+      return {
+        data: mapped,
+        total: totalCount,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      };
+    }
+
+    return mapped;
   }
 
   async findOne(id: number) {

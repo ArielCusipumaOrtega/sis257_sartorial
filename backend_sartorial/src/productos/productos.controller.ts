@@ -10,10 +10,12 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
@@ -36,7 +38,7 @@ export class ProductosController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar prendas con filtros por categoría, marca, talla, corte o término' })
+  @ApiOperation({ summary: 'Listar prendas con filtros por categoría, marca, talla, corte o término y paginación opcional' })
   findAll(
     @Query('categoriaId') categoriaId?: string,
     @Query('marcaId') marcaId?: string,
@@ -46,6 +48,11 @@ export class ProductosController {
     @Query('search') search?: string,
     @Query('esCombo') esCombo?: string,
     @Query('conEliminados') conEliminados?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc',
+    @Query('all') all?: string,
   ) {
     return this.productosService.findAll({
       categoriaId: categoriaId ? +categoriaId : undefined,
@@ -56,6 +63,11 @@ export class ProductosController {
       search,
       esCombo: esCombo !== undefined ? esCombo === 'true' : undefined,
       conEliminados: conEliminados === 'true',
+      page: page ? +page : undefined,
+      limit: limit ? +limit : undefined,
+      sortBy,
+      sortOrder,
+      all: all === 'true',
     });
   }
 
@@ -96,19 +108,54 @@ export class ProductosController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post('upload-image')
-  @ApiOperation({ summary: 'Subir imagen para prenda' })
+  @ApiOperation({ summary: 'Subir imagen para prenda (JPG, PNG, WEBP, máx. 2MB)' })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads',
+        destination: (req, file, cb) => {
+          const uploadPath = './uploads';
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
+        },
         filename: (req, file, cb) => {
           const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+          const sanitizedOriginal = file.originalname.replace(/[^a-zA-Z0-9.]/g, '_');
+          cb(null, `prenda-${uniqueSuffix}${extname(sanitizedOriginal).toLowerCase()}`);
         },
       }),
+      limits: {
+        fileSize: 2 * 1024 * 1024, // Máximo 2MB
+      },
+      fileFilter: (req, file, cb) => {
+        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        const allowedExts = ['.jpg', '.jpeg', '.png', '.webp'];
+        const ext = extname(file.originalname).toLowerCase();
+
+        if (!allowedMimes.includes(file.mimetype) || !allowedExts.includes(ext)) {
+          return cb(
+            new BadRequestException(
+              `Tipo de archivo no permitido (${file.mimetype || ext}). Solo se admiten imágenes JPG, PNG o WEBP.`,
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
     }),
   )
-  uploadFile(@UploadedFile() file: any) {
-    return { url: `/uploads/${file.filename}` };
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException(
+        'No se ha proporcionado ninguna imagen o no cumple con las restricciones permitidas (JPG, PNG, WEBP, máx. 2MB).',
+      );
+    }
+    return {
+      url: `/uploads/${file.filename}`,
+      filename: file.filename,
+      size: file.size,
+      mimetype: file.mimetype,
+    };
   }
 }
