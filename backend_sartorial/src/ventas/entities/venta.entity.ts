@@ -54,6 +54,9 @@ export class Venta {
   @Column({ name: 'comprobante_qr', length: 500, nullable: true })
   comprobanteQr: string;
 
+  @Column({ length: 50, default: 'POS_TIENDA' })
+  canal: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   fechaCreacion: Date;
 

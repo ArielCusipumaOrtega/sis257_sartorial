@@ -6,12 +6,14 @@ import {
   DeleteDateColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   JoinColumn,
 } from 'typeorm';
 import { Rol } from '../../roles/entities/rol.entity';
 import { Compra } from '../../compras/entities/compra.entity';
 import { Venta } from '../../ventas/entities/venta.entity';
 import { Caja } from '../../cajas/entities/caja.entity';
+import { Cliente } from '../../clientes/entities/cliente.entity';
 
 @Entity('usuarios')
 export class Usuario {
@@ -48,6 +50,9 @@ export class Usuario {
 
   @Column({ name: 'rol_id' })
   rolId: number;
+
+  @OneToOne(() => Cliente, (cliente) => cliente.usuario, { nullable: true })
+  cliente?: Cliente;
 
   @OneToMany(() => Compra, (compra) => compra.usuario)
   compras: Compra[];

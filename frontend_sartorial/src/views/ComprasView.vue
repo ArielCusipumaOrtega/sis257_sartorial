@@ -36,7 +36,9 @@
                 <td class="small text-secondary">{{ formatDate(c.fecha) }}</td>
                 <td class="small text-secondary">{{ c.observaciones || 'Ingreso de mercadería' }}</td>
                 <td class="small text-white">{{ c.usuario ? `${c.usuario.nombre} ${c.usuario.apellido}` : 'Admin' }}</td>
-                <td class="fw-bold text-gold text-nowrap-cell cell-price">{{ formatPrice(c.total) }}</td>
+                <td class="fw-bold text-nowrap-cell cell-price">
+                  <PriceTag :amount="c.total" />
+                </td>
                 <td class="cell-actions text-end">
                   <div class="btn-group">
                     <button class="btn btn-sm btn-outline-gold" @click="verDetalle(c)">
@@ -97,7 +99,9 @@
                     <td><span class="badge-talla">{{ d.producto?.talla }}</span></td>
                     <td class="text-center fw-bold">{{ d.cantidad }}</td>
                     <td class="text-end">{{ formatPrice(d.precio) }}</td>
-                    <td class="text-end fw-bold text-gold">{{ formatPrice(d.subtotal) }}</td>
+                    <td class="text-end fw-bold">
+                      <PriceTag :amount="d.subtotal" size="sm" />
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -105,7 +109,9 @@
 
             <div class="text-end pt-3 border-top border-secondary">
               <span class="text-secondary small">Total Factura Proveedor:</span>
-              <div class="display-6 fw-bold text-gold">{{ formatPrice(compraSeleccionada.total) }}</div>
+              <div class="mt-1">
+                <PriceTag :amount="compraSeleccionada.total" size="xl" />
+              </div>
             </div>
           </div>
           <div class="modal-footer border-secondary">
@@ -120,6 +126,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import http from '@/plugins/axios'
+import { PriceTag } from '@/components/common'
 import { formatPrice, formatDate } from '@/helpers'
 
 const compras = ref<any[]>([])

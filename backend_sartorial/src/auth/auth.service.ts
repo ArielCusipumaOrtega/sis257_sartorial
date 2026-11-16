@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -25,7 +25,7 @@ export class AuthService {
     const { usuario, clave } = loginDto;
     const user = await this.usuarioRepository.findOne({
       where: { usuario },
-      relations: ['rol'],
+      relations: ['rol', 'cliente'],
     });
 
     if (!user) {
@@ -46,6 +46,7 @@ export class AuthService {
       usuario: user.usuario,
       correo: user.correo,
       rol: user.rol?.nombre,
+      clienteId: user.cliente?.id,
     };
 
     return {
@@ -56,6 +57,8 @@ export class AuthService {
       usuario: user.usuario,
       correo: user.correo,
       rol: user.rol,
+      cliente: user.cliente || null,
+      clienteId: user.cliente?.id || null,
     };
   }
 
@@ -86,24 +89,29 @@ export class AuthService {
     });
     const savedUser = await this.usuarioRepository.save(nuevoUsuario);
 
-    // Crear perfil de cliente automático
+    // Crear perfil de cliente automático vinculado al usuario
     const nuevoCliente = this.clienteRepository.create({
       nombre: registerDto.nombre,
       apellido: registerDto.apellido,
       correo: registerDto.correo,
       estado: true,
       preferenciaTalla: 'M (40)',
+      usuarioId: savedUser.id,
     });
     await this.clienteRepository.save(nuevoCliente);
 
     return this.login({ usuario: registerDto.usuario, clave: registerDto.password });
   }
 
-  async getProfile(userId: number) {
-    return this.usuarioRepository.findOne({
-      where: { id: userId },
-      relations: ['rol'],
-      select: ['id', 'nombre', 'apellido', 'correo', 'usuario', 'estado', 'fechaCreacion'],
+  async getProfile(usuarioId: number) {
+    const user = await this.usuarioRepository.findOne({
+      where: { id: usuarioId },
+      relations: ['rol', 'cliente', 'cliente.medidas'],
     });
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    const { password, ...resto } = user;
+    return resto;
   }
 }

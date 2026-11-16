@@ -10,6 +10,7 @@ import { Producto } from '../productos/entities/producto.entity';
 import { MetodoPago } from '../metodos-pago/entities/metodo-pago.entity';
 import { Promocion } from '../promociones/entities/promocion.entity';
 import { ComboProducto } from '../productos/entities/combo-producto.entity';
+import { MedidaCliente } from '../medidas-cliente/entities/medida-cliente.entity';
 import { SeederService } from './seeder.service';
 
 @Module({
@@ -25,6 +26,7 @@ import { SeederService } from './seeder.service';
       MetodoPago,
       Promocion,
       ComboProducto,
+      MedidaCliente,
     ]),
   ],
   providers: [SeederService],

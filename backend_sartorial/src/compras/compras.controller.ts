@@ -23,9 +23,25 @@ export class ComprasController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar compras realizadas' })
-  findAll(@Query('conInactivos') conInactivos?: string) {
-    return this.comprasService.findAll(conInactivos === 'true');
+  @ApiOperation({ summary: 'Listar compras realizadas con paginación y filtros' })
+  findAll(
+    @Query('conInactivos') conInactivos?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc',
+    @Query('all') all?: string,
+  ) {
+    return this.comprasService.findAll({
+      conInactivos: conInactivos === 'true',
+      page: page ? +page : undefined,
+      limit: limit ? +limit : undefined,
+      search,
+      sortBy,
+      sortOrder,
+      all: all === 'true',
+    });
   }
 
   @Get(':id')

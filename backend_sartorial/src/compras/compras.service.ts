@@ -82,12 +82,58 @@ export class ComprasService {
     }
   }
 
-  findAll(conInactivos: boolean = false) {
-    return this.compraRepository.find({
-      relations: ['proveedor', 'usuario', 'detalles', 'detalles.producto'],
-      order: { fecha: 'DESC' },
-      withDeleted: conInactivos,
-    });
+  async findAll(query?: {
+    conInactivos?: boolean;
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
+    all?: boolean;
+  }) {
+    const qb = this.compraRepository.createQueryBuilder('compra')
+      .leftJoinAndSelect('compra.proveedor', 'proveedor')
+      .leftJoinAndSelect('compra.usuario', 'usuario')
+      .leftJoinAndSelect('compra.detalles', 'detalles')
+      .leftJoinAndSelect('detalles.producto', 'producto');
+
+    if (query?.conInactivos) {
+      qb.withDeleted();
+    } else {
+      qb.andWhere('compra.estado = :estado', { estado: true });
+    }
+
+    if (query?.search) {
+      qb.andWhere(
+        '(proveedor.nombre ILIKE :s OR compra.observaciones ILIKE :s)',
+        { s: `%${query.search}%` },
+      );
+    }
+
+    const sortField = query?.sortBy ? (query.sortBy.includes('.') ? query.sortBy : `compra.${query.sortBy}`) : 'compra.fecha';
+    const sortDir = query?.sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    qb.orderBy(sortField, sortDir);
+
+    const page = query?.page ? Math.max(1, Number(query.page)) : null;
+    const limit = query?.limit ? Math.max(1, Math.min(100, Number(query.limit))) : null;
+    const isPaginated = page !== null && limit !== null && !query?.all;
+
+    if (isPaginated) {
+      qb.skip((page - 1) * limit).take(limit);
+      const [data, total] = await qb.getManyAndCount();
+      const totalPages = Math.ceil(total / limit) || 1;
+      return {
+        data,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      };
+    }
+
+    return qb.getMany();
   }
 
   async findOne(id: number) {
