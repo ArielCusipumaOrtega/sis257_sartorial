@@ -21,6 +21,7 @@ import { Promocion } from './promociones/entities/promocion.entity';
 import { ComboProducto } from './productos/entities/combo-producto.entity';
 import { Delivery } from './ventas/entities/delivery.entity';
 import { Caja } from './cajas/entities/caja.entity';
+import { MedidaCliente } from './medidas-cliente/entities/medida-cliente.entity';
 
 // Módulos
 import { RolesModule } from './roles/roles.module';
@@ -41,6 +42,9 @@ import { PromocionesModule } from './promociones/promociones.module';
 import { CajasModule } from './cajas/cajas.module';
 import { DetallesCompraModule } from './detalles-compra/detalles-compra.module';
 import { DetallesVentaModule } from './detalles-venta/detalles-venta.module';
+import { MedidasClienteModule } from './medidas-cliente/medidas-cliente.module';
+import { DocumentosModule } from './reportes-documentos/documentos.module';
+import { AsesorEstiloModule } from './asesor-estilo/asesor-estilo.module';
 
 @Module({
   imports: [
@@ -71,6 +75,7 @@ import { DetallesVentaModule } from './detalles-venta/detalles-venta.module';
         ComboProducto,
         Delivery,
         Caja,
+        MedidaCliente,
       ],
       synchronize: true, // Auto-sincronización en desarrollo
       logging: false,
@@ -93,6 +98,9 @@ import { DetallesVentaModule } from './detalles-venta/detalles-venta.module';
     CajasModule,
     DetallesCompraModule,
     DetallesVentaModule,
+    MedidasClienteModule,
+    DocumentosModule,
+    AsesorEstiloModule,
   ],
 })
 export class AppModule {}
