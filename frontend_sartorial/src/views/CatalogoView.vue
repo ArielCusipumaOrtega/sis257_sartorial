@@ -11,18 +11,24 @@
         <router-link to="/" class="navbar-brand d-flex align-items-center gap-2 text-decoration-none">
           <i class="bi bi-suit-heart-fill text-gold fs-4"></i>
           <div>
-            <div class="font-display fw-bold text-gold tracking-wide" style="font-size: 1.25rem; letter-spacing: 2.5px;">SARTORIAL PRESTIGE</div>
-            <div class="text-secondary" style="font-size: 0.65rem; letter-spacing: 3px; font-weight: 600;">HAUTE COUTURE & BOUTIQUE</div>
+            <div class="font-display fw-bold text-gold tracking-wide brand-title" style="font-size: 1.15rem; letter-spacing: 1.8px;">SARTORIAL PRESTIGE</div>
+            <div class="text-secondary d-none d-sm-block" style="font-size: 0.65rem; letter-spacing: 3px; font-weight: 600;">HAUTE COUTURE & BOUTIQUE</div>
           </div>
         </router-link>
 
-        <div class="d-flex align-items-center gap-3 ms-auto order-lg-last">
-          <!-- Botón Carrito -->
-          <button class="btn btn-outline-gold position-relative px-3 py-2 d-flex align-items-center gap-2" @click="carritoOpen = true">
+        <div class="d-flex align-items-center gap-2 gap-sm-3 ms-auto order-lg-last">
+          <!-- Botón Asesor de Estilo -->
+          <button class="btn btn-outline-warning text-gold d-flex align-items-center gap-1 gap-sm-2 px-2 px-sm-3 py-2" @click="asesorModalOpen = true">
+            <i class="bi bi-stars"></i>
+            <span class="d-none d-md-inline font-display small">Asesor de Estilo</span>
+          </button>
+
+          <!-- Botón Carrito Global -->
+          <button class="btn btn-outline-gold position-relative px-2 px-sm-3 py-2 d-flex align-items-center gap-1 gap-sm-2" @click="cartStore.openCart">
             <i class="bi bi-bag-check-fill fs-5"></i>
             <span class="d-none d-sm-inline">Bolsa</span>
-            <span v-if="carrito.length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-              {{ totalPrendasCarrito }}
+            <span v-if="cartStore.totalItems > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ cartStore.totalItems }}
             </span>
           </button>
 
@@ -58,8 +64,16 @@
         <p class="lead text-secondary mx-auto mb-4" style="max-width: 720px; font-size: 1.05rem;">
           Descubra trajes de dos y tres piezas, blazers de terciopelo, pantalones de corte sastre, calzado artesanal cosido a mano y accesorios confeccionados con los tejidos más nobles de Europa.
         </p>
-        <div class="d-flex justify-content-center gap-3">
-          <a href="#catalogo-seccion" class="btn btn-gold btn-lg px-4 py-3 font-display" style="letter-spacing: 1.5px;">
+        <div class="d-flex justify-content-center flex-wrap gap-3">
+          <button
+            class="btn btn-gold btn-lg px-4 py-3 font-display d-flex align-items-center gap-2 shadow"
+            style="letter-spacing: 1.5px;"
+            @click="asesorModalOpen = true"
+          >
+            <i class="bi bi-stars fs-5"></i>
+            <span>ASESOR DE ESTILO (IA)</span>
+          </button>
+          <a href="#catalogo-seccion" class="btn btn-outline-gold btn-lg px-4 py-3 font-display" style="letter-spacing: 1.5px;">
             EXPLORAR COLECCIÓN
           </a>
           <router-link
@@ -141,62 +155,96 @@
       </div>
 
       <!-- Grid de Productos -->
-      <div v-else-if="prendasFiltradas.length > 0" class="row g-4">
-        <div v-for="p in prendasFiltradas" :key="p.id" class="col-12 col-sm-6 col-lg-4 col-xl-3">
-          <div class="card-sartorial h-100 d-flex flex-column position-relative group-hover">
-            <!-- Badge de Descuento o Outfit -->
-            <div class="position-absolute top-0 start-0 m-3 z-2 d-flex flex-column gap-1">
-              <span v-if="p.esCombo" class="badge bg-gold px-2 py-1 font-display">
-                <i class="bi bi-stars me-1"></i> LOOK COMPLETO
-              </span>
-              <span v-else-if="p.descuentoPorcentaje > 0" class="badge bg-danger px-2 py-1 font-display">
-                -{{ p.descuentoPorcentaje }}% OFF
-              </span>
-            </div>
-
-            <!-- Imagen de la Prenda -->
-            <div class="ratio ratio-4x3 overflow-hidden" style="background: #111827; cursor: pointer;" @click="abrirDetalle(p)">
-              <img
-                :src="getImageUrl(p.imagen)"
-                :alt="p.nombre"
-                class="img-fluid object-fit-cover transition-transform"
-                style="transition: transform 0.4s ease;"
-              />
-            </div>
-
-            <!-- Info Prenda -->
-            <div class="card-sartorial-body p-3 d-flex flex-column flex-grow-1">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <small class="text-gold fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 1px;">
-                  {{ p.marca?.nombre || 'Sartorial Collection' }}
-                </small>
-                <span class="badge-talla">{{ p.talla }}</span>
+      <div v-else-if="prendasPaginadas.length > 0">
+        <div class="row g-4">
+          <div v-for="p in prendasPaginadas" :key="p.id" class="col-12 col-sm-6 col-lg-4 col-xl-3">
+            <div class="card-sartorial h-100 d-flex flex-column position-relative group-hover">
+              <!-- Badge de Descuento o Outfit -->
+              <div class="position-absolute top-0 start-0 m-3 z-2 d-flex flex-column gap-1">
+                <span v-if="p.esCombo" class="badge bg-gold px-2 py-1 font-display">
+                  <i class="bi bi-stars me-1"></i> LOOK COMPLETO
+                </span>
+                <span v-else-if="p.descuentoPorcentaje > 0" class="badge bg-danger px-2 py-1 font-display">
+                  -{{ p.descuentoPorcentaje }}% OFF
+                </span>
               </div>
 
-              <h6 class="fw-bold mb-2 text-white font-serif text-truncate-2" style="font-size: 0.95rem; min-height: 2.8rem; cursor: pointer;" @click="abrirDetalle(p)">
-                {{ p.nombre }}
-              </h6>
-
-              <div class="d-flex flex-wrap gap-1 mb-3">
-                <span v-if="p.corte" class="badge-corte">{{ p.corte }}</span>
-                <span v-if="p.color" class="badge bg-dark border border-secondary text-secondary" style="font-size: 0.7rem;">{{ p.color }}</span>
+              <!-- Imagen de la Prenda -->
+              <div class="ratio ratio-4x3 overflow-hidden" style="background: #111827; cursor: pointer;" @click="abrirDetalle(p)">
+                <img
+                  :src="getImageUrl(p.imagen)"
+                  :alt="p.nombre"
+                  class="img-fluid object-fit-cover transition-transform"
+                  style="transition: transform 0.4s ease;"
+                />
               </div>
 
-              <div class="mt-auto pt-2 border-top border-secondary d-flex justify-content-between align-items-center">
-                <div>
-                  <div v-if="p.descuentoPorcentaje > 0" class="text-decoration-line-through text-secondary" style="font-size: 0.8rem;">
-                    {{ formatPrice(p.precioVenta) }}
-                  </div>
-                  <div class="fw-bold text-gold fs-5">
-                    {{ formatPrice(p.precioFinal || p.precioVenta) }}
-                  </div>
+              <!-- Info Prenda -->
+              <div class="card-sartorial-body p-3 d-flex flex-column flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <small class="text-gold fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 1px;">
+                    {{ p.marca?.nombre || 'Sartorial Collection' }}
+                  </small>
+                  <span class="badge-talla">{{ p.talla }}</span>
                 </div>
 
-                <button class="btn btn-sm btn-gold d-flex align-items-center gap-1" @click="agregarAlCarrito(p)">
-                  <i class="bi bi-bag-plus"></i> Añadir
-                </button>
+                <h6 class="fw-bold mb-2 text-white font-serif text-truncate-2" style="font-size: 0.95rem; min-height: 2.8rem; cursor: pointer;" @click="abrirDetalle(p)">
+                  {{ p.nombre }}
+                </h6>
+
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                  <span v-if="p.corte" class="badge-corte">{{ p.corte }}</span>
+                  <span v-if="p.color" class="badge bg-dark border border-secondary text-secondary" style="font-size: 0.7rem;">{{ p.color }}</span>
+                </div>
+
+                <div class="mt-auto pt-2 border-top border-secondary d-flex justify-content-between align-items-center">
+                  <PriceTag
+                    :amount="p.precioFinal || p.precioVenta"
+                    :original-amount="p.descuentoPorcentaje > 0 ? p.precioVenta : undefined"
+                    size="md"
+                  />
+
+                  <button class="btn btn-sm btn-gold d-flex align-items-center gap-1" @click="agregarAlCarrito(p)">
+                    <i class="bi bi-bag-plus"></i> Añadir
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Controles de Paginación Elegantes (Máx 8 por página) -->
+        <div v-if="totalPaginas > 1" class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-5 p-3 rounded card-sartorial border-secondary">
+          <div class="text-secondary small font-display">
+            Mostrando <span class="text-gold fw-bold">{{ rangoInicio }}</span> a <span class="text-gold fw-bold">{{ rangoFin }}</span> de <span class="text-white fw-bold">{{ prendasFiltradas.length }}</span> prendas exclusivas
+          </div>
+
+          <div class="d-flex align-items-center gap-1 flex-wrap justify-content-center">
+            <button
+              class="btn btn-sm btn-outline-gold d-flex align-items-center gap-1"
+              :disabled="paginaActual <= 1"
+              @click="cambiarPagina(paginaActual - 1)"
+            >
+              <i class="bi bi-chevron-left"></i> Anterior
+            </button>
+
+            <button
+              v-for="p in paginasVisibles"
+              :key="p"
+              class="btn btn-sm px-3"
+              :class="p === paginaActual ? 'btn-gold fw-bold shadow-sm' : 'btn-outline-secondary text-white'"
+              @click="cambiarPagina(p)"
+            >
+              {{ p }}
+            </button>
+
+            <button
+              class="btn btn-sm btn-outline-gold d-flex align-items-center gap-1"
+              :disabled="paginaActual >= totalPaginas"
+              @click="cambiarPagina(paginaActual + 1)"
+            >
+              Siguiente <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -267,40 +315,40 @@
       </div>
     </div>
 
-    <!-- Offcanvas Carrito de Compras -->
-    <div class="offcanvas offcanvas-end text-white" :class="{ show: carritoOpen }" style="background: #0B0F17; border-left: 1px solid var(--border-color); visibility: visible; width: 420px;" v-if="carritoOpen">
+    <!-- Offcanvas Carrito de Compras Global -->
+    <div class="offcanvas offcanvas-end text-white" :class="{ show: cartStore.isOpen }" style="background: #0B0F17; border-left: 1px solid var(--border-color); visibility: visible; width: 420px;" v-if="cartStore.isOpen">
       <div class="offcanvas-header border-bottom border-secondary p-3">
         <h5 class="offcanvas-title font-display text-gold"><i class="bi bi-bag-check-fill me-2"></i> Mi Bolsa de Compras</h5>
-        <button type="button" class="btn-close btn-close-white" @click="carritoOpen = false"></button>
+        <button type="button" class="btn-close btn-close-white" @click="cartStore.closeCart"></button>
       </div>
 
       <div class="offcanvas-body p-3 d-flex flex-column">
-        <div v-if="carrito.length === 0" class="text-center py-5 my-auto">
+        <div v-if="cartStore.isEmpty" class="text-center py-5 my-auto">
           <i class="bi bi-bag-x display-3 text-secondary mb-3"></i>
           <h5 class="font-serif">Su bolsa está vacía</h5>
           <p class="text-secondary small">Descubra trajes, blazers y calzado en nuestro catálogo exclusivo.</p>
         </div>
 
         <div v-else class="flex-grow-1 overflow-y-auto">
-          <div v-for="item in carrito" :key="item.id" class="p-3 mb-2 rounded d-flex gap-3 align-items-center" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);">
+          <div v-for="item in cartStore.items" :key="item.id" class="p-3 mb-2 rounded d-flex gap-3 align-items-center" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);">
             <img :src="getImageUrl(item.imagen)" class="rounded object-fit-cover" style="width: 60px; height: 60px;" />
             <div class="flex-grow-1">
               <div class="fw-bold small text-white text-truncate" style="max-width: 180px;">{{ item.nombre }}</div>
-              <small class="text-gold">{{ formatPrice(item.precioFinal || item.precioVenta) }}</small>
+              <PriceTag :amount="item.precioFinal || item.precioVenta" size="sm" />
               <div class="d-flex align-items-center gap-2 mt-2">
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 text-white" @click="modificarCantidad(item, -1)">-</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-2 text-white" @click="cartStore.updateQuantity(item.id, -1)">-</button>
                 <span class="small fw-bold">{{ item.cantidad }}</span>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 text-white" @click="modificarCantidad(item, 1)">+</button>
-                <button class="btn btn-sm btn-outline-danger ms-auto py-0 px-2" @click="quitarDelCarrito(item)"><i class="bi bi-trash"></i></button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-2 text-white" @click="cartStore.updateQuantity(item.id, 1)">+</button>
+                <button class="btn btn-sm btn-outline-danger ms-auto py-0 px-2" @click="cartStore.removeItem(item.id)"><i class="bi bi-trash"></i></button>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="carrito.length > 0" class="pt-3 border-top border-secondary mt-auto">
+        <div v-if="!cartStore.isEmpty" class="pt-3 border-top border-secondary mt-auto">
           <div class="d-flex justify-content-between mb-2">
             <span class="text-secondary">Subtotal Prendas:</span>
-            <span class="fw-bold">{{ formatPrice(subtotalCarrito) }}</span>
+            <PriceTag :amount="cartStore.subtotal" size="sm" color="white" />
           </div>
           <div class="d-flex justify-content-between mb-3">
             <span class="text-secondary">Planchado & Embalaje de Gala:</span>
@@ -308,7 +356,7 @@
           </div>
           <div class="d-flex justify-content-between mb-4 fs-5">
             <span class="fw-bold font-serif">Total:</span>
-            <span class="fw-bold text-gold">{{ formatPrice(subtotalCarrito) }}</span>
+            <PriceTag :amount="cartStore.subtotal" size="md" color="gold" />
           </div>
 
           <!-- Aviso si no ha iniciado sesión -->
@@ -407,6 +455,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Botón Flotante Asesor de Estilo -->
+    <button
+      class="btn btn-gold rounded-pill shadow-lg d-flex align-items-center gap-2 px-3 py-2 position-fixed"
+      style="bottom: 24px; left: 24px; z-index: 1040; border: 2px solid #E5C07B;"
+      title="Consultar al Asesor de Estilo con IA"
+      @click="asesorModalOpen = true"
+    >
+      <i class="bi bi-stars fs-5"></i>
+      <span class="font-display small fw-bold d-none d-sm-inline">Asesor de Estilo (IA)</span>
+    </button>
+
+    <!-- Modal Asesor de Estilo (IA) -->
+    <AsesorEstiloModal
+      v-model="asesorModalOpen"
+      :cliente-id="authStore.user?.clienteId || authStore.user?.cliente?.id"
+      @add-prenda="agregarAlCarrito"
+      @add-look="onAddLookAsesor"
+    />
   </div>
 </template>
 
@@ -416,11 +483,15 @@ import { useRouter } from 'vue-router'
 import http from '@/plugins/axios'
 import { getImageUrl, formatPrice } from '@/helpers'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
+import { PriceTag, AsesorEstiloModal } from '@/components/common'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const cartStore = useCartStore()
 const cargando = ref(true)
+const asesorModalOpen = ref(false)
 const prendas = ref<any[]>([])
 const categorias = ref<any[]>([])
 const marcas = ref<any[]>([])
@@ -433,7 +504,6 @@ const soloCombos = ref(false)
 const ordenPrecios = ref('defecto')
 
 const prendaModal = ref<any | null>(null)
-const carritoOpen = ref(false)
 const checkoutOpen = ref(false)
 const procesandoPedido = ref(false)
 
@@ -442,24 +512,6 @@ const rutaAdministracion = computed(() => {
   if (authStore.isVendedor) return '/vendedor/dashboard'
   return '/login'
 })
-
-// Carrito persistente
-const carrito = ref<any[]>([])
-
-const loadCart = () => {
-  const saved = localStorage.getItem('sartorial_cart')
-  if (saved) {
-    try {
-      carrito.value = JSON.parse(saved)
-    } catch (e) {
-      carrito.value = []
-    }
-  }
-}
-
-const saveCart = () => {
-  localStorage.setItem('sartorial_cart', JSON.stringify(carrito.value))
-}
 
 const checkoutForm = ref({
   nombre: authStore.user ? `${authStore.user.nombre} ${authStore.user.apellido}` : '',
@@ -488,20 +540,9 @@ watch(
   { immediate: true },
 )
 
-const totalPrendasCarrito = computed(() => {
-  return carrito.value.reduce((acc, item) => acc + item.cantidad, 0)
-})
-
-const subtotalCarrito = computed(() => {
-  return carrito.value.reduce((acc, item) => {
-    const p = item.precioFinal || item.precioVenta
-    return acc + Number(p) * item.cantidad
-  }, 0)
-})
-
 const totalConDelivery = computed(() => {
   const delivery = checkoutForm.value.tipoEntrega === 'Delivery' ? 15.0 : 0
-  return subtotalCarrito.value + delivery
+  return cartStore.subtotal + delivery
 })
 
 const esMetodoQr = computed(() => {
@@ -518,10 +559,10 @@ const cargarDatos = async () => {
       http.get('marcas'),
       http.get('metodos-pago'),
     ])
-    prendas.value = pRes.data
-    categorias.value = cRes.data
-    marcas.value = mRes.data
-    metodosPago.value = mpRes.data
+    prendas.value = Array.isArray(pRes.data) ? pRes.data : (pRes.data?.data || [])
+    categorias.value = Array.isArray(cRes.data) ? cRes.data : (cRes.data?.data || [])
+    marcas.value = Array.isArray(mRes.data) ? mRes.data : (mRes.data?.data || [])
+    metodosPago.value = Array.isArray(mpRes.data) ? mpRes.data : (mpRes.data?.data || [])
     if (metodosPago.value.length > 0) {
       checkoutForm.value.metodoPagoId = metodosPago.value[0].id
     }
@@ -533,7 +574,7 @@ const cargarDatos = async () => {
 }
 
 const prendasFiltradas = computed(() => {
-  let list = [...prendas.value]
+  let list = Array.isArray(prendas.value) ? [...prendas.value] : []
 
   if (soloCombos.value) {
     list = list.filter((p) => p.esCombo)
@@ -565,12 +606,65 @@ const prendasFiltradas = computed(() => {
   return list
 })
 
+// --- Paginación del Catálogo (Máximo 8 productos por página) ---
+const itemsPerPage = 8
+const paginaActual = ref(1)
+
+const totalPaginas = computed(() => {
+  return Math.ceil(prendasFiltradas.value.length / itemsPerPage) || 1
+})
+
+const prendasPaginadas = computed(() => {
+  const page = Math.min(paginaActual.value, totalPaginas.value)
+  const start = (page - 1) * itemsPerPage
+  return prendasFiltradas.value.slice(start, start + itemsPerPage)
+})
+
+const rangoInicio = computed(() => {
+  if (prendasFiltradas.value.length === 0) return 0
+  return (paginaActual.value - 1) * itemsPerPage + 1
+})
+
+const rangoFin = computed(() => {
+  return Math.min(paginaActual.value * itemsPerPage, prendasFiltradas.value.length)
+})
+
+const paginasVisibles = computed(() => {
+  const total = totalPaginas.value
+  const curr = paginaActual.value
+  const start = Math.max(1, curr - 2)
+  const end = Math.min(total, start + 4)
+  const pages: number[] = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+const cambiarPagina = (nuevaPagina: number) => {
+  if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas.value) {
+    paginaActual.value = nuevaPagina
+    const seccion = document.getElementById('catalogo-seccion')
+    if (seccion) {
+      seccion.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+}
+
+watch(
+  [filtroBusqueda, categoriaSeleccionada, marcaSeleccionada, soloCombos, ordenPrecios],
+  () => {
+    paginaActual.value = 1
+  },
+)
+
 const resetFiltros = () => {
   filtroBusqueda.value = ''
   categoriaSeleccionada.value = null
   marcaSeleccionada.value = null
   soloCombos.value = false
   ordenPrecios.value = 'defecto'
+  paginaActual.value = 1
 }
 
 const abrirDetalle = (p: any) => {
@@ -578,37 +672,21 @@ const abrirDetalle = (p: any) => {
 }
 
 const agregarAlCarrito = (p: any) => {
-  const item = carrito.value.find((i) => i.id === p.id)
-  if (item) {
-    item.cantidad++
-  } else {
-    carrito.value.push({ ...p, cantidad: 1 })
-  }
-  saveCart()
-  carritoOpen.value = true
+  cartStore.addItem(p)
 }
 
-const modificarCantidad = (item: any, delta: number) => {
-  item.cantidad += delta
-  if (item.cantidad <= 0) {
-    quitarDelCarrito(item)
-  } else {
-    saveCart()
-  }
-}
-
-const quitarDelCarrito = (item: any) => {
-  carrito.value = carrito.value.filter((i) => i.id !== item.id)
-  saveCart()
+const onAddLookAsesor = (prendasLook: any[]) => {
+  prendasLook.forEach((p) => cartStore.addItem(p))
+  cartStore.openCart()
 }
 
 const abrirCheckout = async () => {
-  if (carrito.value.length === 0) return
+  if (cartStore.isEmpty) return
 
   // Validación: Se requiere sesión activa para procesar la compra
   if (!authStore.isAuthenticated) {
     authStore.returnUrl = '/'
-    carritoOpen.value = false
+    cartStore.closeCart()
     await Swal.fire({
       icon: 'info',
       title: 'Inicio de Sesión Requerido',
@@ -628,7 +706,7 @@ const abrirCheckout = async () => {
     return
   }
 
-  carritoOpen.value = false
+  cartStore.closeCart()
   checkoutOpen.value = true
 }
 
@@ -647,7 +725,7 @@ const procesarPedido = async () => {
       direccion: checkoutForm.value.tipoEntrega === 'Delivery' ? checkoutForm.value.direccion : 'Retiro en Boutique',
       telefonoContacto: checkoutForm.value.telefono,
       costoDelivery: checkoutForm.value.tipoEntrega === 'Delivery' ? 15.0 : 0,
-      detalles: carrito.value.map((i) => ({
+      detalles: cartStore.items.map((i) => ({
         productoId: i.id,
         cantidad: i.cantidad,
         precio: i.precioFinal || i.precioVenta,
@@ -665,8 +743,7 @@ const procesarPedido = async () => {
 
     const res = await http.post('ventas', payload)
     checkoutOpen.value = false
-    carrito.value = []
-    saveCart()
+    cartStore.clearCart()
 
     Swal.fire({
       icon: 'success',
@@ -702,7 +779,6 @@ const logout = () => {
 }
 
 onMounted(() => {
-  loadCart()
   cargarDatos()
 })
 </script>
