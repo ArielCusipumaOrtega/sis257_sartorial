@@ -7,6 +7,7 @@ const API_URL = import.meta.env.VITE_BASE_URL_ENDPOINT || 'http://127.0.0.1:3000
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
 })
 
 axiosInstance.interceptors.request.use((config) => {
