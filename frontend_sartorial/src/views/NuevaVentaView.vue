@@ -30,6 +30,24 @@
                   placeholder="Escanear SKU o buscar por nombre, talla, tela..."
                   @keydown.enter="escanearCodigo"
                 />
+                <button
+                  class="btn btn-outline-warning text-gold border-secondary d-flex align-items-center gap-1"
+                  type="button"
+                  title="Escanear con Cámara Web / Móvil"
+                  @click="abrirEscanerCamara"
+                >
+                  <i class="bi bi-camera-fill"></i>
+                  <span class="d-none d-sm-inline">Cámara</span>
+                </button>
+                <button
+                  class="btn btn-gold text-dark d-flex align-items-center gap-1 font-display"
+                  type="button"
+                  title="Consultar Asesor de Estilo con IA"
+                  @click="asesorModalOpen = true"
+                >
+                  <i class="bi bi-stars"></i>
+                  <span class="d-none d-xl-inline">Asesor IA</span>
+                </button>
               </div>
             </div>
             <div class="col-4">
@@ -58,7 +76,7 @@
                   </div>
                   <div class="fw-bold small text-white text-truncate mb-1" :title="p.nombre">{{ p.nombre }}</div>
                   <div class="d-flex justify-content-between align-items-center mt-auto pt-1 border-top border-secondary">
-                    <span class="fw-bold text-gold">{{ formatPrice(p.precioFinal || p.precioVenta) }}</span>
+                    <PriceTag :amount="p.precioFinal || p.precioVenta" size="sm" />
                     <small :class="p.stock > 0 ? 'text-success' : 'text-danger fw-bold'">
                       {{ p.stock > 0 ? p.stock + ' en stock' : 'Agotado' }}
                     </small>
@@ -122,11 +140,11 @@
           <div class="pt-3 border-top border-secondary mt-auto">
             <div class="d-flex justify-content-between mb-1">
               <span class="text-secondary small">Subtotal:</span>
-              <span class="fw-bold">{{ formatPrice(subtotalVenta) }}</span>
+              <PriceTag :amount="subtotalVenta" size="sm" color="white" />
             </div>
             <div class="d-flex justify-content-between mb-3 fs-4 font-serif">
               <span class="fw-bold text-white">TOTAL A COBRAR:</span>
-              <span class="fw-bold text-gold">{{ formatPrice(subtotalVenta) }}</span>
+              <PriceTag :amount="subtotalVenta" size="lg" color="gold" />
             </div>
 
             <div class="d-grid gap-2">
@@ -270,11 +288,19 @@
               </div>
             </div>
           </div>
-          <div class="modal-footer border-0 p-3 bg-light">
+          <div class="modal-footer border-0 p-3 bg-light d-flex flex-wrap justify-content-between gap-2">
             <button type="button" class="btn btn-secondary" @click="cerrarRecibo">Cerrar</button>
-            <button type="button" class="btn btn-dark" @click="imprimirTicket">
-              <i class="bi bi-printer me-1"></i> Imprimir Recibo
-            </button>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-dark" @click="descargarTicketPdf" title="Descargar Ticket Térmico 80mm en PDF">
+                <i class="bi bi-receipt me-1"></i> Ticket PDF (80mm)
+              </button>
+              <button type="button" class="btn btn-gold text-dark" @click="descargarFacturaPdf" title="Descargar Factura A4 en PDF">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Factura A4
+              </button>
+              <button type="button" class="btn btn-outline-dark" @click="imprimirTicket">
+                <i class="bi bi-printer me-1"></i> Imprimir
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -323,14 +349,70 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Escáner de Códigos con Cámara Web / Móvil -->
+    <div v-if="camaraModalOpen" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title font-display text-gold d-flex align-items-center gap-2">
+              <i class="bi bi-qr-code-scan"></i> Escáner de Cámara (SKU / QR)
+            </h5>
+            <button type="button" class="btn-close btn-close-white" @click="cerrarEscanerCamara"></button>
+          </div>
+          <div class="modal-body p-3 text-center">
+            <p class="small text-secondary mb-2">
+              Apunte la cámara hacia el código de barras o código QR de la prenda para añadirla directamente al ticket.
+            </p>
+            <div id="qr-reader-container" class="rounded overflow-hidden border border-secondary mx-auto" style="width: 100%; max-width: 420px; min-height: 260px; background: #0b0f17;"></div>
+            <div v-if="escanerError" class="alert alert-danger mt-3 small py-2">
+              {{ escanerError }}
+            </div>
+          </div>
+          <div class="modal-footer border-secondary justify-content-between">
+            <span class="small text-secondary"><i class="bi bi-info-circle me-1"></i> Soporta EAN-13, CODE-128, QR</span>
+            <button type="button" class="btn btn-outline-secondary" @click="cerrarEscanerCamara">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Asesor de Estilo (IA) -->
+    <AsesorEstiloModal
+      v-model="asesorModalOpen"
+      :cliente-id="clienteSeleccionadoId || undefined"
+      @add-prenda="agregarAlTicket"
+      @add-look="onAddLookPos"
+    />
+
+    <!-- Barra Flotante Sticky de Ticket para Móviles / Tablets -->
+    <div
+      v-if="ticketItems.length > 0"
+      class="d-lg-none position-fixed bottom-0 start-0 end-0 p-3 shadow-lg d-flex justify-content-between align-items-center"
+      style="z-index: 1030; background: rgba(11, 15, 23, 0.95) !important; backdrop-filter: blur(12px); border-top: 2px solid var(--primary);"
+    >
+      <div>
+        <small class="text-secondary d-block font-display" style="font-size: 0.7rem;">Ticket ({{ totalUnidadesTicket }} prendas):</small>
+        <span class="fs-5 fw-bold text-gold">{{ formatPrice(totalVenta) }}</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-danger" @click="limpiarTicket" title="Vaciar Ticket">
+          <i class="bi bi-trash"></i>
+        </button>
+        <button class="btn btn-gold px-3 py-2 font-display d-flex align-items-center gap-1 shadow" @click="abrirModalCobro">
+          <i class="bi bi-cash-coin"></i> Cobrar
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import http from '@/plugins/axios'
 import { getImageUrl, formatPrice, formatDate } from '@/helpers'
 import { useAuthStore } from '@/stores/auth'
+import { PriceTag, AsesorEstiloModal } from '@/components/common'
 import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
@@ -346,6 +428,16 @@ const categoriaFiltro = ref<number | null>(null)
 const clienteSeleccionadoId = ref<number | null>(null)
 const ticketItems = ref<any[]>([])
 
+// Modal Asesor de Estilo IA
+const asesorModalOpen = ref(false)
+
+const onAddLookPos = (prendasLook: any[]) => {
+  prendasLook.forEach((p) => {
+    const real = prendas.value.find((x) => x.id === p.id || x.codigo === p.codigo) || p
+    agregarAlTicket(real)
+  })
+}
+
 // Modal de Cobro
 const cobroModalOpen = ref(false)
 const metodoPagoId = ref(1)
@@ -353,6 +445,11 @@ const montoRecibido = ref(0)
 const referenciaPago = ref('')
 const procesandoCobro = ref(false)
 const ventaCompletada = ref<any | null>(null)
+
+// Escáner de Códigos de Barra / QR con Cámara
+const camaraModalOpen = ref(false)
+const escanerError = ref<string | null>(null)
+let html5QrCode: any = null
 
 // Modal Crear Cliente
 const crearClienteModal = ref(false)
@@ -367,14 +464,14 @@ const nuevoClienteForm = ref({
 const cargarDatos = async () => {
   try {
     const [pRes, cRes, clRes, mpRes] = await Promise.all([
-      http.get('productos'),
+      http.get('productos', { params: { all: true } }),
       http.get('categorias'),
-      http.get('clientes'),
+      http.get('clientes', { params: { all: true } }),
       http.get('metodos-pago'),
     ])
-    prendas.value = pRes.data
+    prendas.value = Array.isArray(pRes.data) ? pRes.data : (pRes.data.data || [])
     categorias.value = cRes.data
-    clientes.value = clRes.data
+    clientes.value = Array.isArray(clRes.data) ? clRes.data : (clRes.data.data || [])
     metodosPago.value = mpRes.data
     if (metodosPago.value.length > 0) {
       metodoPagoId.value = metodosPago.value[0].id
@@ -470,6 +567,90 @@ const escanearCodigo = () => {
   }
 }
 
+const abrirEscanerCamara = async () => {
+  camaraModalOpen.value = true
+  escanerError.value = null
+  await nextTick()
+  iniciarCamara()
+}
+
+const iniciarCamara = async () => {
+  try {
+    const { Html5Qrcode } = await import('html5-qrcode')
+    html5QrCode = new Html5Qrcode('qr-reader-container')
+    await html5QrCode.start(
+      { facingMode: 'environment' },
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 180 },
+      },
+      (decodedText: string) => {
+        onCodigoEscaneado(decodedText)
+      },
+      () => {},
+    )
+  } catch (err: any) {
+    console.error('Error al iniciar cámara:', err)
+    escanerError.value = 'No se pudo acceder a la cámara. Asegúrese de otorgar permisos de cámara.'
+  }
+}
+
+const cerrarEscanerCamara = async () => {
+  if (html5QrCode) {
+    try {
+      await html5QrCode.stop()
+      await html5QrCode.clear()
+    } catch (e) {
+      console.warn('Error deteniendo escáner', e)
+    }
+    html5QrCode = null
+  }
+  camaraModalOpen.value = false
+}
+
+const onCodigoEscaneado = (codigoLeido: string) => {
+  const codigoLimpio = codigoLeido.trim().toLowerCase()
+  const match = prendas.value.find(
+    (p) =>
+      p.codigo?.toLowerCase() === codigoLimpio ||
+      String(p.id) === codigoLimpio ||
+      p.nombre?.toLowerCase() === codigoLimpio,
+  )
+
+  if (match) {
+    agregarAlTicket(match)
+    Swal.fire({
+      icon: 'success',
+      title: '¡Prenda Escaneada!',
+      text: `${match.nombre} (${match.talla}) añadida al ticket`,
+      timer: 1400,
+      showConfirmButton: false,
+      background: '#131A26',
+      color: '#F8FAFC',
+      toast: true,
+      position: 'top-end',
+    })
+    cerrarEscanerCamara()
+  } else {
+    Swal.fire({
+      icon: 'info',
+      title: 'Código no encontrado',
+      text: `No se encontró ninguna prenda con el código: "${codigoLeido}"`,
+      background: '#131A26',
+      color: '#F8FAFC',
+      timer: 2000,
+    })
+  }
+}
+
+onBeforeUnmount(() => {
+  if (html5QrCode) {
+    try {
+      html5QrCode.stop().then(() => html5QrCode.clear())
+    } catch {}
+  }
+})
+
 const cambiarCantidad = (item: any, delta: number) => {
   const nuevaCant = item.cantidad + delta
   if (nuevaCant <= 0) {
@@ -550,6 +731,20 @@ const cerrarRecibo = () => {
 
 const imprimirTicket = () => {
   window.print()
+}
+
+const descargarTicketPdf = () => {
+  if (!ventaCompletada.value) return
+  const base = http.defaults.baseURL || '/api/v1/'
+  const url = `${base.replace(/\/+$/, '')}/documentos/ticket/${ventaCompletada.value.id}`
+  window.open(url, '_blank')
+}
+
+const descargarFacturaPdf = () => {
+  if (!ventaCompletada.value) return
+  const base = http.defaults.baseURL || '/api/v1/'
+  const url = `${base.replace(/\/+$/, '')}/documentos/factura/${ventaCompletada.value.id}`
+  window.open(url, '_blank')
 }
 
 const guardarNuevoCliente = async () => {
