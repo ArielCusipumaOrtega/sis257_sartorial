@@ -210,16 +210,17 @@ const cargarDashboard = async () => {
     const [statsRes, ventasRes, clientesRes, prodRes] = await Promise.all([
       http.get('ventas/estadisticas'),
       http.get('ventas?limit=5'),
-      http.get('clientes'),
-      http.get('productos'),
+      http.get('clientes', { params: { all: true } }),
+      http.get('productos', { params: { all: true } }),
     ])
 
     kpis.value = statsRes.data
-    ultimasVentas.value = ventasRes.data
-    totalClientes.value = clientesRes.data.length
-    prendasStockBajo.value = prodRes.data.filter((p: any) => p.stock <= p.stockMinimo)
+    ultimasVentas.value = Array.isArray(ventasRes.data) ? ventasRes.data : (ventasRes.data.data || [])
+    totalClientes.value = Array.isArray(clientesRes.data) ? clientesRes.data.length : (clientesRes.data.total || 0)
+    const prods = Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data.data || [])
+    prendasStockBajo.value = prods.filter((p: any) => p.stock <= p.stockMinimo)
 
-    renderCharts(prodRes.data)
+    renderCharts(prods)
   } catch (err) {
     console.error('Error al cargar dashboard:', err)
   }

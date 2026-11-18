@@ -14,7 +14,7 @@
     <!-- Filtros -->
     <div class="card-sartorial p-3 mb-4">
       <div class="row g-3">
-        <div class="col-md-5">
+        <div class="col-md-6">
           <div class="input-group">
             <span class="input-group-text bg-transparent text-gold border-secondary"><i class="bi bi-search"></i></span>
             <input v-model="filtroBusqueda" type="text" class="form-control" placeholder="Buscar por nombre, código SKU, color, material..." />
@@ -32,11 +32,6 @@
             <option v-for="m in marcas" :key="m.id" :value="m.id">{{ m.nombre }}</option>
           </select>
         </div>
-        <div class="col-md-1">
-          <button class="btn btn-outline-secondary w-100 text-white" @click="cargarDatos" title="Recargar">
-            <i class="bi bi-arrow-clockwise"></i>
-          </button>
-        </div>
         <div class="col-12 d-flex align-items-center pt-2 border-top border-secondary border-opacity-25 mt-2">
           <div class="form-check form-switch mb-0">
             <input class="form-check-input" type="checkbox" id="checkEliminados" v-model="verEliminados" @change="cargarDatos" />
@@ -52,67 +47,82 @@
     <div class="card-sartorial">
       <div class="card-sartorial-body p-0">
         <div class="table-responsive">
-          <table class="table-sartorial mb-0">
+          <table class="table-sartorial table-fixed mb-0" style="min-width: 860px;">
             <thead>
               <tr>
-                <th>Prenda</th>
-                <th class="text-nowrap-cell">SKU</th>
-                <th>Categoría / Firma</th>
-                <th class="text-nowrap-cell">Talla & Corte</th>
-                <th>Tejido / Color</th>
-                <th class="text-nowrap-cell">Precio Venta</th>
-                <th class="text-nowrap-cell">Stock</th>
-                <th v-if="authStore.isAdmin" class="cell-actions text-end">Acciones</th>
+                <th style="width: 21%;">Prenda</th>
+                <th style="width: 11%;">SKU</th>
+                <th style="width: 13%;">Categoría / Firma</th>
+                <th style="width: 13%;">Talla & Corte</th>
+                <th style="width: 14%;">Tejido / Color</th>
+                <th class="text-end" style="width: 12%;">Precio Venta</th>
+                <th class="text-center" style="width: 8%;">Stock</th>
+                <th v-if="authStore.isAdmin" class="cell-actions text-end pe-3" style="width: 8%;">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="p in prendasFiltradas" :key="p.id">
                 <td>
                   <div class="d-flex align-items-center gap-2">
-                    <img :src="getImageUrl(p.imagen)" class="rounded object-fit-cover" style="width: 44px; height: 44px; background: #111;" />
-                    <div>
-                      <div class="fw-bold text-white">{{ p.nombre }}</div>
-                      <small v-if="p.esCombo" class="badge bg-gold px-1 py-0">Outfit Completo</small>
+                    <img :src="getImageUrl(p.imagen)" class="rounded object-fit-cover flex-shrink-0" style="width: 38px; height: 38px; background: #111;" />
+                    <div class="min-w-0" style="overflow: hidden;">
+                      <div class="fw-bold text-white text-truncate-2" style="font-size: 0.84rem; line-height: 1.25;" :title="p.nombre">{{ p.nombre }}</div>
+                      <div class="d-flex flex-wrap gap-1 mt-1">
+                        <small v-if="p.esCombo" class="badge bg-gold px-1 py-0" style="font-size: 0.65rem;">Outfit Completo</small>
+                        <small v-if="p.fechaEliminacion" class="badge bg-danger px-1 py-0" style="font-size: 0.65rem;">Dado de baja</small>
+                      </div>
                     </div>
                   </div>
                 </td>
-                <td class="text-gold fw-bold small text-nowrap-cell cell-sku">{{ p.codigo }}</td>
+                <td class="text-gold fw-bold small text-nowrap" style="letter-spacing: 0.3px;">{{ p.codigo }}</td>
                 <td>
-                  <div class="text-white small">{{ p.categoria?.nombre || 'General' }}</div>
-                  <small class="text-secondary">{{ p.marca?.nombre || 'Sartorial' }}</small>
-                </td>
-                <td class="text-nowrap-cell cell-badge">
-                  <span class="badge-talla me-1">{{ p.talla }}</span>
-                  <span class="badge-corte">{{ p.corte }}</span>
+                  <div class="text-white small fw-semibold lh-sm text-truncate" :title="p.categoria?.nombre || 'General'">{{ p.categoria?.nombre || 'General' }}</div>
+                  <small class="text-secondary d-block text-truncate mt-1" :title="p.marca?.nombre || 'Sartorial'">{{ p.marca?.nombre || 'Sartorial' }}</small>
                 </td>
                 <td>
-                  <div class="small text-white">{{ p.material }}</div>
-                  <small class="text-secondary">{{ p.color }}</small>
+                  <div class="d-flex flex-wrap gap-1 align-items-center">
+                    <span class="badge-talla" style="font-size: 0.72rem; padding: 2px 7px;">{{ p.talla }}</span>
+                    <span class="badge-corte" style="font-size: 0.72rem; padding: 2px 7px;">{{ p.corte }}</span>
+                  </div>
                 </td>
-                <td class="text-nowrap-cell cell-price">
-                  <div class="fw-bold text-gold">{{ formatPrice(p.precioFinal || p.precioVenta) }}</div>
-                  <small v-if="p.descuentoPorcentaje > 0" class="text-danger">
-                    -{{ p.descuentoPorcentaje }}% (Antes {{ formatPrice(p.precioVenta) }})
-                  </small>
+                <td>
+                  <div class="small text-white lh-sm text-truncate" :title="p.material">{{ p.material }}</div>
+                  <small class="text-secondary d-block text-truncate mt-1" :title="p.color">{{ p.color }}</small>
                 </td>
-                <td class="text-nowrap-cell cell-stock">
-                  <span :class="p.stock <= p.stockMinimo ? 'badge-stock-low' : 'badge-stock-ok'">
-                    {{ p.stock }} unid. (mín {{ p.stockMinimo }})
+                <td class="text-end">
+                  <PriceTag
+                    :amount="p.precioFinal || p.precioVenta"
+                    :original-amount="p.descuentoPorcentaje > 0 ? p.precioVenta : undefined"
+                    :discount="p.descuentoPorcentaje"
+                    size="sm"
+                    stacked
+                  />
+                </td>
+                <td class="text-center">
+                  <span
+                    :class="p.stock <= p.stockMinimo ? 'badge-stock-low' : 'badge-stock-ok'"
+                    class="d-inline-block text-nowrap"
+                    style="font-size: 0.74rem; padding: 2px 7px;"
+                  >
+                    <i v-if="p.stock <= p.stockMinimo" class="bi bi-exclamation-triangle-fill me-1"></i>
+                    {{ p.stock }} unid.
                   </span>
+                  <div class="text-secondary" style="font-size: 0.68rem; margin-top: 2px;">
+                    mín: {{ p.stockMinimo }}
+                  </div>
                 </td>
-                <td v-if="authStore.isAdmin" class="cell-actions text-end">
-                  <div class="btn-group">
+                <td v-if="authStore.isAdmin" class="cell-actions text-end pe-3">
+                  <div class="btn-group btn-group-sm">
                     <template v-if="p.fechaEliminacion">
-                      <span class="badge bg-danger me-2">Dado de baja</span>
-                      <button class="btn btn-sm btn-outline-success" @click="restaurarPrenda(p)" title="Restaurar Prenda">
-                        <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                      <button class="btn btn-sm btn-outline-success px-2 py-1" @click="restaurarPrenda(p)" title="Restaurar Prenda">
+                        <i class="bi bi-arrow-counterclockwise"></i>
                       </button>
                     </template>
                     <template v-else>
-                      <button class="btn btn-sm btn-outline-gold" @click="abrirModalEditar(p)" title="Editar">
+                      <button class="btn btn-sm btn-outline-gold px-2 py-1" @click="abrirModalEditar(p)" title="Editar">
                         <i class="bi bi-pencil"></i>
                       </button>
-                      <button class="btn btn-sm btn-outline-danger" @click="eliminarPrenda(p)" title="Dar de baja (Soft Delete)">
+                      <button class="btn btn-sm btn-outline-danger px-2 py-1" @click="eliminarPrenda(p)" title="Dar de baja (Soft Delete)">
                         <i class="bi bi-trash"></i>
                       </button>
                     </template>
@@ -120,7 +130,7 @@
                 </td>
               </tr>
               <tr v-if="prendasFiltradas.length === 0">
-                <td colspan="8" class="text-center text-secondary py-5">
+                <td :colspan="authStore.isAdmin ? 8 : 7" class="text-center text-secondary py-5">
                   No se encontraron prendas registradas
                 </td>
               </tr>
@@ -226,8 +236,16 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label">URL de Imagen de Alta Definición</label>
-                <input v-model="form.imagen" type="text" class="form-control" placeholder="https://images.unsplash.com/..." />
+                <label class="form-label">Imagen de la Prenda</label>
+                <div class="input-group">
+                  <input v-model="form.imagen" type="text" class="form-control" placeholder="URL externa o archivo subido..." />
+                  <label class="btn btn-outline-warning text-gold border-secondary mb-0 cursor-pointer d-flex align-items-center gap-1" title="Subir imagen (JPG, PNG, WEBP, máx 2MB)">
+                    <i class="bi bi-cloud-arrow-up-fill"></i>
+                    <span>{{ subiendoImagen ? 'Subiendo...' : 'Subir Archivo' }}</span>
+                    <input type="file" class="d-none" accept="image/jpeg,image/png,image/webp" :disabled="subiendoImagen" @change="onFileChange" />
+                  </label>
+                </div>
+                <small class="text-secondary" style="font-size: 0.72rem;">Formatos permitidos: JPG, PNG, WEBP (Límite máximo: 2 MB).</small>
               </div>
 
               <div class="mb-3">
@@ -253,6 +271,7 @@ import { ref, computed, onMounted } from 'vue'
 import http from '@/plugins/axios'
 import { getImageUrl, formatPrice } from '@/helpers'
 import { useAuthStore } from '@/stores/auth'
+import { PriceTag, StatusBadge } from '@/components/common'
 import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
@@ -269,6 +288,7 @@ const marcaFiltro = ref<number | null>(null)
 const modalOpen = ref(false)
 const modoEdicion = ref(false)
 const guardando = ref(false)
+const subiendoImagen = ref(false)
 const prendaEditandoId = ref<number | null>(null)
 
 const form = ref({
@@ -293,25 +313,31 @@ const verEliminados = ref(false)
 
 const cargarDatos = async () => {
   try {
-    const [pRes, cRes, mRes, prRes] = await Promise.all([
+    const promises: Promise<any>[] = [
       http.get('productos', {
         params: { conEliminados: verEliminados.value ? 'true' : undefined },
       }),
       http.get('categorias'),
       http.get('marcas'),
-      http.get('proveedores'),
-    ])
-    prendas.value = pRes.data
-    categorias.value = cRes.data
-    marcas.value = mRes.data
-    proveedores.value = prRes.data
+    ]
+    if (authStore.isAdmin) {
+      promises.push(http.get('proveedores'))
+    }
+
+    const [pRes, cRes, mRes, prRes] = await Promise.all(promises)
+    prendas.value = Array.isArray(pRes.data) ? pRes.data : (pRes.data?.data || [])
+    categorias.value = Array.isArray(cRes.data) ? cRes.data : (cRes.data?.data || [])
+    marcas.value = Array.isArray(mRes.data) ? mRes.data : (mRes.data?.data || [])
+    if (prRes) {
+      proveedores.value = Array.isArray(prRes.data) ? prRes.data : (prRes.data?.data || [])
+    }
   } catch (err) {
-    console.error(err)
+    console.error('Error al cargar datos en ProductosView:', err)
   }
 }
 
 const prendasFiltradas = computed(() => {
-  let list = [...prendas.value]
+  let list = Array.isArray(prendas.value) ? [...prendas.value] : []
   if (categoriaFiltro.value) {
     list = list.filter((p) => p.categoriaId === categoriaFiltro.value)
   }
@@ -376,6 +402,68 @@ const abrirModalEditar = (p: any) => {
     descripcion: p.descripcion || '',
   }
   modalOpen.value = true
+}
+
+const onFileChange = async (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  if (file.size > 2 * 1024 * 1024) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Archivo Excede el Límite',
+      text: 'La imagen seleccionada supera el límite máximo de 2 MB.',
+      background: '#131A26',
+      color: '#F8FAFC',
+    })
+    target.value = ''
+    return
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Formato no admitido',
+      text: 'Solo se admiten imágenes en formato JPG, PNG o WEBP.',
+      background: '#131A26',
+      color: '#F8FAFC',
+    })
+    target.value = ''
+    return
+  }
+
+  subiendoImagen.value = true
+  const formData = new FormData()
+  formData.append('file', file)
+
+  try {
+    const res = await http.post('productos/upload-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    form.value.imagen = res.data.url
+    Swal.fire({
+      icon: 'success',
+      title: '¡Imagen Subida!',
+      text: 'La imagen fue validada y guardada correctamente.',
+      timer: 1500,
+      showConfirmButton: false,
+      background: '#131A26',
+      color: '#F8FAFC',
+    })
+  } catch (err: any) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al subir imagen',
+      text: err.response?.data?.message || 'No se pudo subir la imagen.',
+      background: '#131A26',
+      color: '#F8FAFC',
+    })
+  } finally {
+    subiendoImagen.value = false
+    target.value = ''
+  }
 }
 
 const guardarPrenda = async () => {

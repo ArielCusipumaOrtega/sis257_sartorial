@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex min-vh-100" style="background: var(--bg-dark);">
+  <div class="d-flex min-vh-100" style="background: var(--bg-dark); overflow-x: hidden;">
     <!-- Sidebar -->
     <aside class="sidebar" :class="{ show: sidebarOpen }">
       <div class="sidebar-brand">
@@ -80,6 +80,13 @@
       </nav>
     </aside>
 
+    <!-- Backdrop móvil para cerrar sidebar al hacer clic fuera -->
+    <div
+      v-if="sidebarOpen"
+      class="sidebar-backdrop d-lg-none"
+      @click="sidebarOpen = false"
+    ></div>
+
     <!-- Main Wrapper -->
     <div class="main-wrapper flex-grow-1">
       <header class="top-navbar">
@@ -88,9 +95,12 @@
         </button>
 
         <div class="d-flex align-items-center gap-2 gap-sm-3">
-          <router-link to="/" class="btn btn-outline-gold btn-sm d-flex align-items-center gap-2" title="Ir a la Tienda / Catálogo">
+          <router-link to="/" class="btn btn-outline-gold btn-sm d-flex align-items-center gap-2 position-relative" title="Ir a la Tienda / Catálogo">
             <i class="bi bi-shop"></i>
             <span>Catálogo</span>
+            <span v-if="cartStore.totalItems > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+              {{ cartStore.totalItems }}
+            </span>
           </router-link>
 
           <router-link to="/admin/ventas/nueva" class="btn btn-gold btn-sm d-none d-sm-flex align-items-center gap-2">
@@ -117,7 +127,7 @@
         </div>
       </header>
 
-      <main class="p-4 flex-grow-1">
+      <main class="p-2 p-sm-3 p-md-4 flex-grow-1">
         <router-view />
       </main>
 
@@ -131,8 +141,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 
 const authStore = useAuthStore()
+const cartStore = useCartStore()
 const sidebarOpen = ref(false)
 
 const logout = () => {
