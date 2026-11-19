@@ -32,14 +32,6 @@
             <option v-for="m in marcas" :key="m.id" :value="m.id">{{ m.nombre }}</option>
           </select>
         </div>
-        <div class="col-12 d-flex align-items-center pt-2 border-top border-secondary border-opacity-25 mt-2">
-          <div class="form-check form-switch mb-0">
-            <input class="form-check-input" type="checkbox" id="checkEliminados" v-model="verEliminados" @change="cargarDatos" />
-            <label class="form-check-label text-secondary small ms-2" for="checkEliminados">
-              Mostrar también prendas dadas de baja (Soft Delete)
-            </label>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -309,14 +301,10 @@ const form = ref({
   descripcion: '',
 })
 
-const verEliminados = ref(false)
-
 const cargarDatos = async () => {
   try {
     const promises: Promise<any>[] = [
-      http.get('productos', {
-        params: { conEliminados: verEliminados.value ? 'true' : undefined },
-      }),
+      http.get('productos'),
       http.get('categorias'),
       http.get('marcas'),
     ]

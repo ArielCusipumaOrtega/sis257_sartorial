@@ -38,19 +38,19 @@ export class SeederService implements OnModuleInit {
     console.log('--- Iniciando Seeder de Sartorial Prestige Boutique ---');
 
     // 1. ROLES
-    let rolAdmin = await this.rolRepo.findOne({ where: { nombre: 'ADMIN' } });
+    let rolAdmin = await this.rolRepo.findOne({ where: { nombre: 'ADMIN' }, withDeleted: true });
     if (!rolAdmin) {
       rolAdmin = await this.rolRepo.save(
         this.rolRepo.create({ nombre: 'ADMIN', descripcion: 'Administrador general de la Boutique Sartorial Prestige' }),
       );
     }
-    let rolVendedor = await this.rolRepo.findOne({ where: { nombre: 'VENDEDOR' } });
+    let rolVendedor = await this.rolRepo.findOne({ where: { nombre: 'VENDEDOR' }, withDeleted: true });
     if (!rolVendedor) {
       rolVendedor = await this.rolRepo.save(
         this.rolRepo.create({ nombre: 'VENDEDOR', descripcion: 'Asesor de estilo y encargado de caja (POS)' }),
       );
     }
-    let rolCliente = await this.rolRepo.findOne({ where: { nombre: 'CLIENTE' } });
+    let rolCliente = await this.rolRepo.findOne({ where: { nombre: 'CLIENTE' }, withDeleted: true });
     if (!rolCliente) {
       rolCliente = await this.rolRepo.save(
         this.rolRepo.create({ nombre: 'CLIENTE', descripcion: 'Cliente exclusivo registrado en la plataforma' }),
@@ -60,12 +60,12 @@ export class SeederService implements OnModuleInit {
     // 2. USUARIOS
     const hash = async (pwd: string) => bcrypt.hash(pwd, 10);
 
-    const adminUser = await this.usuarioRepo.findOne({ where: { usuario: 'admin' } });
+    const adminUser = await this.usuarioRepo.findOne({ where: { usuario: 'admin' }, withDeleted: true });
     if (!adminUser) {
       await this.usuarioRepo.save(
         this.usuarioRepo.create({
-          nombre: 'Gerardo',
-          apellido: 'De La Fuente',
+          nombre: 'Ariel',
+          apellido: 'Cusipuma Ortega',
           correo: 'admin@sartorialprestige.com',
           usuario: 'admin',
           password: await hash('admin123'),
@@ -73,9 +73,13 @@ export class SeederService implements OnModuleInit {
           rolId: rolAdmin.id,
         }),
       );
+    } else {
+      adminUser.nombre = 'Ariel';
+      adminUser.apellido = 'Cusipuma Ortega';
+      await this.usuarioRepo.save(adminUser);
     }
 
-    const vend1 = await this.usuarioRepo.findOne({ where: { usuario: 'vendedor1' } });
+    const vend1 = await this.usuarioRepo.findOne({ where: { usuario: 'vendedor1' }, withDeleted: true });
     if (!vend1) {
       await this.usuarioRepo.save(
         this.usuarioRepo.create({
@@ -90,7 +94,7 @@ export class SeederService implements OnModuleInit {
       );
     }
 
-    const vend2 = await this.usuarioRepo.findOne({ where: { usuario: 'vendedor2' } });
+    const vend2 = await this.usuarioRepo.findOne({ where: { usuario: 'vendedor2' }, withDeleted: true });
     if (!vend2) {
       await this.usuarioRepo.save(
         this.usuarioRepo.create({
@@ -105,7 +109,7 @@ export class SeederService implements OnModuleInit {
       );
     }
 
-    const clientDemo = await this.usuarioRepo.findOne({ where: { usuario: 'cliente1' } });
+    const clientDemo = await this.usuarioRepo.findOne({ where: { usuario: 'cliente1' }, withDeleted: true });
     if (!clientDemo) {
       await this.usuarioRepo.save(
         this.usuarioRepo.create({
@@ -212,7 +216,7 @@ export class SeederService implements OnModuleInit {
     ];
     const provMap: Record<string, Proveedor> = {};
     for (const p of provsData) {
-      let prov = await this.proveedorRepo.findOne({ where: { nombre: p.nombre } });
+      let prov = await this.proveedorRepo.findOne({ where: { nombre: p.nombre }, withDeleted: true });
       if (!prov) prov = await this.proveedorRepo.save(this.proveedorRepo.create(p));
       provMap[p.nombre] = prov;
     }
@@ -234,7 +238,7 @@ export class SeederService implements OnModuleInit {
     ];
     const marcaMap: Record<string, Marca> = {};
     for (const m of marcasData) {
-      let marca = await this.marcaRepo.findOne({ where: { nombre: m.nombre } });
+      let marca = await this.marcaRepo.findOne({ where: { nombre: m.nombre }, withDeleted: true });
       if (!marca) marca = await this.marcaRepo.save(this.marcaRepo.create(m));
       marcaMap[m.nombre] = marca;
     }
@@ -284,7 +288,7 @@ export class SeederService implements OnModuleInit {
     ];
     const catMap: Record<string, Categoria> = {};
     for (const c of categoriasData) {
-      let cat = await this.categoriaRepo.findOne({ where: { nombre: c.nombre } });
+      let cat = await this.categoriaRepo.findOne({ where: { nombre: c.nombre }, withDeleted: true });
       if (!cat) cat = await this.categoriaRepo.save(this.categoriaRepo.create(c));
       else if (!cat.imagen) {
         cat.imagen = c.imagen;
@@ -1317,7 +1321,7 @@ export class SeederService implements OnModuleInit {
 
     const prodMap: Record<string, Producto> = {};
     for (const p of productosData) {
-      let prod = await this.productoRepo.findOne({ where: { codigo: p.codigo } });
+      let prod = await this.productoRepo.findOne({ where: { codigo: p.codigo }, withDeleted: true });
       const cat = catMap[p.cat];
       const marca = marcaMap[p.marca];
       const prov = provMap[p.prov];
@@ -1431,7 +1435,7 @@ export class SeederService implements OnModuleInit {
     ];
 
     for (const c of combosData) {
-      let combo = await this.productoRepo.findOne({ where: { codigo: c.codigo } });
+      let combo = await this.productoRepo.findOne({ where: { codigo: c.codigo }, withDeleted: true });
       if (!combo) {
         combo = await this.productoRepo.save(
           this.productoRepo.create({

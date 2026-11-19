@@ -427,7 +427,7 @@ La pantalla de inicio de sesión (`/login`) cuenta con botones de **acceso rápi
 
 | Perfil | Nombre | Usuario | Contraseña | Destino tras Login |
 |:---|:---|:---|:---|:---|
-| **Administrador** | Gerardo De La Fuente | `admin` | `admin123` | `/admin/dashboard` |
+| **Administrador** | Ariel Cusipuma Ortega | `admin` | `admin123` | `/admin/dashboard` |
 | **Asesor POS / Vendedor** | Mauricio Castillo | `vendedor1` | `vend123` | `/vendedor/dashboard` |
 | **Cliente Exclusivo** | Carlos Roca | `cliente1` | `client123` | `/` (Catálogo Boutique) |
 
